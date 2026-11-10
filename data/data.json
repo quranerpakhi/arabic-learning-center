@@ -1,0 +1,13 @@
+{
+  "live_classes": {
+    "whatsapp_link": "https://whatsapp.com",
+    "google_meet_link": "https://google.com"
+  },
+  "regular_notes": [
+    { "id": 1, "title": "ক্লাস ১: আরবী হরফ পরিচয়", "link": "https://google.com" },
+    { "id": 2, "title": "ক্লাস ২: হরকতের ব্যবহার", "link": "https://google.com" }
+  ],
+  "extra_notes": [
+    { "id": 1, "title": "অতিরিক্ত ক্লাস: সূরা ফাতিহার তাফসীর", "link": "https://google.com" }
+  ]
+}
