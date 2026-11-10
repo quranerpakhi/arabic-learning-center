@@ -123,3 +123,14 @@ footer {
     margin-top: 40px;
     border-top: 1px solid #eee;
 }
+
+/* নেটলিফাই বাটন সম্পূর্ণ লুকিয়ে ফেলার ম্যাজিক কোড */
+#netlify-badge, 
+.netlify-badge,
+[id*="netlify"], 
+[class*="netlify"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
