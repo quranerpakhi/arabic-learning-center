@@ -124,23 +124,19 @@ footer {
     border-top: 1px solid #eee;
 }
 
-/* সুপার পাওয়ারফুল সিএসএস ট্রিক */
-iframe[src*="netlify"], 
-div[class*="netlify"], 
-div[id*="netlify"],
-[id*="netlify-badge"],
-[class*="netlify-badge"],
-#netlify-badge,
-.netlify-badge {
+/* নেটলিফাই প্রক্সি ব্যাজ হাইড করার চূড়ান্ত সিএসএস */
+#nf-badge, 
+.nf-badge,
+iframe[id*="nf-"], 
+div[id*="nf-badge"] {
     display: none !important;
     visibility: hidden !important;
     opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
     position: absolute !important;
     top: -9999px !important;
-    left: -9999px !important;
-    width: 0 !important;
-    height: 0 !important;
     pointer-events: none !important;
-    z-index: -9999 !important;
 }
+
 
