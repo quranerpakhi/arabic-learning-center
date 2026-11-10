@@ -124,13 +124,23 @@ footer {
     border-top: 1px solid #eee;
 }
 
-/* নেটলিফাই বাটন সম্পূর্ণ লুকিয়ে ফেলার ম্যাজিক কোড */
-#netlify-badge, 
-.netlify-badge,
-[id*="netlify"], 
-[class*="netlify"] {
+/* সুপার পাওয়ারফুল সিএসএস ট্রিক */
+iframe[src*="netlify"], 
+div[class*="netlify"], 
+div[id*="netlify"],
+[id*="netlify-badge"],
+[class*="netlify-badge"],
+#netlify-badge,
+.netlify-badge {
     display: none !important;
     visibility: hidden !important;
     opacity: 0 !important;
+    position: absolute !important;
+    top: -9999px !important;
+    left: -9999px !important;
+    width: 0 !important;
+    height: 0 !important;
     pointer-events: none !important;
+    z-index: -9999 !important;
 }
+
