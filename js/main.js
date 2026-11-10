@@ -40,3 +40,27 @@ function filterNotes(type) {
         container.appendChild(card);
     });
 }
+
+// নেটলিফাই বাটন চিরতরে ধ্বংস করার ডাইনামিক স্ক্রিপ্ট
+function destroyNetlifyBadge() {
+    // সম্ভাব্য সব উপায়ে নেটলিফাই এলিমেন্ট খুঁজে বের করা
+    const selectors = [
+        '#netlify-badge',
+        '.netlify-badge',
+        'iframe[src*="netlify"]',
+        '[id*="netlify"]',
+        '[class*="netlify"]'
+    ];
+    
+    selectors.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(el => {
+            el.remove(); // সরাসরি ওয়েবসাইট থেকে ডিভ বা বাটনটি ডিলিট করে দেওয়া
+        });
+    });
+}
+
+// পেজ লোড হওয়ার সাথে সাথে এবং প্রতি ১ সেকেন্ড পর পর এটি ব্যাকগ্রাউন্ডে চেক করবে
+document.addEventListener("DOMContentLoaded", destroyNetlifyBadge);
+window.addEventListener("load", destroyNetlifyBadge);
+setInterval(destroyNetlifyBadge, 1000); // ১ সেকেন্ড পর পর বাটনটি আসলে তা মুছে দেবে
