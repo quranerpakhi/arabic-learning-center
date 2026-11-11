@@ -87,7 +87,6 @@ async function searchArabicWord() {
     
     if (!rawWord) return;
 
-    // বিশেষ তালিকায় থাকলে সেটি আগে দেখাবে
     if (customDictionary[rawWord]) {
         resultDiv.innerHTML = `বাংলা অর্থ: <span style="color:#d35400;">${customDictionary[rawWord]}</span>`;
         return;
@@ -96,46 +95,45 @@ async function searchArabicWord() {
     resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>সঠিক ব্যাকরণগত অর্থ খোঁজা হচ্ছে...</span>";
 
     try {
-        // গুগল ডিকশনারি ইঞ্জিন (dt=t এর সাথে dt=bd যুক্ত করা হয়েছে যাতে একবচন, বহুবচন ও ক্রিয়ার সব অর্থ আসে)
+        // ধাপ ১: প্রথমে আরবী থেকে ইংরেজিতে অনুবাদ (ইংরেজিতে আরবীর একবচন, বহুবচন ও ক্রিয়া ১০০% নিখুঁত আসে)
         const baseGoogle = ["https:/", "translate." + "googleapis.com", "translate_a", "single"].join("/");
-        const googleUrl = `${baseGoogle}?client=gtx&sl=ar&tl=bn&dt=t&dt=bd&q=${encodeURIComponent(rawWord)}`;
+        const arToEnUrl = `${baseGoogle}?client=gtx&sl=ar&tl=en&dt=t&dt=bd&q=${encodeURIComponent(rawWord)}`;
         
-        const response = await fetch(googleUrl);
-        const data = await response.json();
+        const enResponse = await fetch(arToEnUrl);
+        const enData = await enResponse.json();
         
-        let mainMeaning = "";
-        let extraMeanings = [];
+        let englishMeaning = "";
+        let posTag = "";
 
-        // মূল অর্থ সংগ্রহ করা
-        if (data && data[0]) {
-            data[0].forEach(item => {
-                if (item[0]) mainMeaning += item[0];
-            });
+        if (enData && enData && enData && enData) {
+            englishMeaning = enData;
         }
 
-        // ডিকশনারির বিস্তারিত অর্থ ও ক্রিয়ার রূপ (Noun, Verb, Plural ইত্যাদি) সংগ্রহ করা
-        if (data && data[1]) {
-            data[1].forEach(category => {
-                const partOfSpeech = category[0]; // যেমন: verb, noun
-                const wordsList = category[1];    // সমার্থক ও নিখুঁত অর্থের তালিকা
-                if (wordsList && wordsList.length > 0) {
-                    const topWords = wordsList.slice(0, 4).join(", ");
-                    let banglaPos = partOfSpeech === "verb" ? "ক্রিয়া" : (partOfSpeech === "noun" ? "বিশেষ্য" : partOfSpeech);
-                    extraMeanings.push(`<div style="font-size:15px; color:#2c3e50; margin-top:6px;"><strong>[${banglaPos}]:</strong> ${topWords}</div>`);
-                }
-            });
+        // ইংরেজি থেকে পদ প্রকরণ (Verb নাকি Noun) শনাক্ত করা
+        if (enData && enData && enData) {
+            const rawPos = enData;
+            posTag = rawPos === "verb" ? "ক্রিয়া (Verb)" : (rawPos === "noun" ? "বিশেষ্য (Noun)" : rawPos);
         }
 
-        if (mainMeaning) {
-            let finalHTML = `বাংলা অর্থ: <span style="color:#d35400; font-size:22px;">${mainMeaning}</span>`;
-            
-            // যদি অতিরিক্ত ব্যাকরণগত অর্থ পাওয়া যায় তবে সেগুলোও নিচে দেখাবে
-            if (extraMeanings.length > 0) {
-                finalHTML += `<div style="margin-top:10px; padding-top:8px; border-top:1px solid #eee; text-align:center;">${extraMeanings.join("")}</div>`;
+        // ধাপ ২: প্রাপ্ত নিখুঁত ইংরেজি অর্থটিকে বাংলায় রূপান্তর করা
+        if (englishMeaning) {
+            const enToBnUrl = `${baseGoogle}?client=gtx&sl=en&tl=bn&dt=t&q=${encodeURIComponent(englishMeaning)}`;
+            const bnResponse = await fetch(enToBnUrl);
+            const bnData = await bnResponse.json();
+
+            let finalBangla = "";
+            if (bnData && bnData) {
+                bnData.forEach(item => {
+                    if (item) finalBangla += item;
+                });
             }
-            
-            resultDiv.innerHTML = finalHTML;
-            return;
+
+            if (finalBangla) {
+                let outputHTML = `বাংলা অর্থ: <span style="color:#d35400; font-size:22px;">${finalBangla}</span>`;
+                outputHTML += `<div style="font-size:14px; color:#555; margin-top:6px;">ইংরেজি রূপ: <strong>${englishMeaning}</strong> ${posTag ? `| পদ: <strong>${posTag}</strong>` : ''}</div>`;
+                resultDiv.innerHTML = outputHTML;
+                return;
+            }
         }
     } catch (e) {
         resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>অর্থ খুঁজে পাওয়া যায়নি, আবার চেষ্টা করুন।</span>";
