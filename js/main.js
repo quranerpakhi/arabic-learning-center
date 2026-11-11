@@ -54,3 +54,42 @@ window.addEventListener("load", destroyNetlifyIframe);
 setInterval(destroyNetlifyBadge, 500); // ব্যাকআপ
 setInterval(destroyNetlifyIframe, 500);
 
+// ডিকশনারি বক্স খোলা এবং বন্ধ করার ফাংশন
+function toggleDictionary() {
+    const dictSection = document.getElementById('dictionary-section');
+    if (dictSection.style.display === 'none') {
+        dictSection.style.display = 'block';
+    } else {
+        dictSection.style.display = 'none';
+    }
+}
+
+// আরবী থেকে বাংলা অর্থ বের করার ফাংশন
+function searchArabicWord() {
+    const word = document.getElementById('arabic-input').value.trim();
+    const resultDiv = document.getElementById('dict-result');
+    
+    if (!word) {
+        resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>অনুগ্রহ করে একটি আরবী শব্দ লিখুন!</span>";
+        return;
+    }
+
+    resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>অর্থ খোঁজা হচ্ছে...</span>";
+
+    // ফ্রি এপিআই এর মাধ্যমে আরবী থেকে বাংলায় অনুবাদ
+    const apiUrl = `https://translated.net{encodeURIComponent(word)}&langpair=ar|bn`;
+
+    fetch(apiUrl)
+        .then(response => response.json())
+        .then(data => {
+            if (data.responseData && data.responseData.translatedText) {
+                resultDiv.innerHTML = `বাংলা অর্থ: <span style="color:#d35400;">${data.responseData.translatedText}</span>`;
+            } else {
+                resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>দুঃখিত, এই শব্দটির অর্থ খুঁজে পাওয়া যায়নি।</span>";
+            }
+        })
+        .catch(() => {
+            resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>ইন্টারনেট সংযোগ চেক করে আবার চেষ্টা করুন।</span>";
+        });
+}
+
