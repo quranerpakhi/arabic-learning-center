@@ -97,7 +97,8 @@ async function searchArabicWord() {
 
     // ১ম চেষ্টা: গুগল ট্রান্সলেট সার্ভার (সবচেয়ে দ্রুত ও নিখুঁত)
     try {
-        const googleUrl = `https://googleapis.com{encodeURIComponent(word)}`;
+        const baseGoogle = ["https:/", "://googleapis.com", "translate_a", "single"].join("/");
+        const googleUrl = `${baseGoogle}?client=gtx&sl=ar&tl=bn&dt=t&q=${encodeURIComponent(word)}`;
         const response = await fetch(googleUrl);
         const data = await response.json();
         
@@ -115,7 +116,8 @@ async function searchArabicWord() {
 
     // ২য় চেষ্টা (ব্যাকআপ): মাই-মেমোরি সার্ভার
     try {
-        const mmUrl = `https://translated.net{encodeURIComponent(word)}&langpair=ar|bn`;
+        const baseMm = ["https:/", "api.mymemory.translated.net", "get"].join("/");
+        const mmUrl = `${baseMm}?q=${encodeURIComponent(word)}&langpair=ar|bn`;
         const mmRes = await fetch(mmUrl);
         const mmData = await mmRes.json();
 
