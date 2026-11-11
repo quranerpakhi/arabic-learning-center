@@ -87,8 +87,8 @@ async function searchArabicWord() {
     
     if (!rawWord) return;
 
-    if (customDictionary[rawWord]) {
-        resultDiv.innerHTML = `বাংলা অর্থ: <span style="color:#d35400;">${customDictionary[rawWord]}</span>`;
+    if (customDictionary.hasOwnProperty(rawWord)) {
+        resultDiv.innerHTML = `বাংলা অর্থ: <span style="color:#d35400;">${customDictionary.rawWord}</span>`;
         return;
     }
 
@@ -97,10 +97,10 @@ async function searchArabicWord() {
     try {
         const baseGoogle = ["https:/", "translate." + "googleapis.com", "translate_a", "single"].join("/");
         
-        // আরবী ব্যাকরণের নিয়ম: শব্দে তানভীন (ً ٌ ٍ) অথবা শুরুতে 'ال' থাকলে সেটি নিশ্চিতভাবে বিশেষ্য (Noun)
+        // শব্দে তানভীন (ً ٌ ٍ) অথবা শুরুতে 'ال' থাকলে সেটি নিশ্চিতভাবে বিশেষ্য (Noun)
         const isDefinitelyNoun = /[\u064B\u064C\u064D]/.test(rawWord) || rawWord.startsWith("ال");
 
-        // ধাপ ১: শব্দটির পদ প্রকরণ পরীক্ষা করা
+        // ধাপ ১: পদ প্রকরণ (Verb নাকি Noun) পরীক্ষা করা
         const checkUrl = `${baseGoogle}?client=gtx&sl=ar&tl=en&dt=t&dt=bd&q=${encodeURIComponent(rawWord)}`;
         const checkRes = await fetch(checkUrl);
         const checkData = await checkRes.json();
@@ -111,25 +111,28 @@ async function searchArabicWord() {
         if (isDefinitelyNoun) {
             isVerb = false;
             posTag = "বিশেষ্য (Noun)";
-        } else if (checkData && checkData && checkData && checkData) {
-            const rawPos = checkData;
-            if (rawPos === "verb") {
-                isVerb = true;
-                posTag = "ক্রিয়া (Verb)";
-            } else if (rawPos === "noun") {
-                posTag = "বিশেষ্য (Noun)";
-            } else {
-                posTag = rawPos;
+        } else if (Array.isArray(checkData) && Array.isArray(checkData.at(1))) {
+            const firstCategory = checkData.at(1).at(0);
+            if (Array.isArray(firstCategory)) {
+                const rawPos = firstCategory.at(0);
+                if (rawPos === "verb") {
+                    isVerb = true;
+                    posTag = "ক্রিয়া (Verb)";
+                } else if (rawPos === "noun") {
+                    posTag = "বিশেষ্য (Noun)";
+                } else if (typeof rawPos === "string") {
+                    posTag = rawPos;
+                }
             }
         }
 
-        // ধাপ ২: ক্রিয়া এবং বিশেষ্যের জন্য আলাদা প্রসঙ্গ (Context) তৈরি করে নিখুঁত বাংলা অর্থ আনা
+        // ধাপ ২: ক্রিয়া এবং বহুবচন বিশেষ্যের সঠিক অর্থ আনতে প্রসঙ্গ যুক্ত করা
         let queryToTranslate = rawWord;
         if (!rawWord.includes(" ")) {
             if (isVerb) {
-                queryToTranslate = `هو ${rawWord}`; // ক্রিয়াপদের সঠিক রূপের জন্য
+                queryToTranslate = `هو ${rawWord}`;
             } else if (isDefinitelyNoun) {
-                queryToTranslate = `هذه ${rawWord}`; // বিশেষ্য ও বহুবচন চেনানোর জন্য
+                queryToTranslate = `هذه ${rawWord} كثيرة`; // বহুবচন বা বিশেষ্য বোঝাতে 'অনেক' ইঙ্গিত যোগ করা হলো
             }
         }
 
@@ -138,15 +141,17 @@ async function searchArabicWord() {
         const bnData = await bnRes.json();
 
         let finalBangla = "";
-        if (bnData && bnData) {
-            bnData.forEach(item => {
-                if (item && item) finalBangla += item;
+        if (Array.isArray(bnData) && Array.isArray(bnData.at(0))) {
+            bnData.at(0).forEach(item => {
+                if (Array.isArray(item) && typeof item.at(0) === "string") {
+                    finalBangla += item.at(0);
+                }
             });
         }
 
-        // বিশেষ্যের শুরুতে প্রসঙ্গ হিসেবে যুক্ত হওয়া 'এই ' বা 'এগুলো ' শব্দটি পরিষ্কার করা
+        // প্রসঙ্গ হিসেবে যুক্ত হওয়া অতিরিক্ত শব্দগুলো পরিষ্কার করে মূল অর্থ রাখা
         if (isDefinitelyNoun && finalBangla) {
-            finalBangla = finalBangla.replace(/^(এই|এগুলো|এটি|এসব)\s+/g, "");
+            finalBangla = finalBangla.replace(/^(এই|এগুলো|এটি|এসব|অনেক|প্রচুর)\s+/g, "").replace(/\s+(অনেক|প্রচুর)$/g, "");
         }
 
         if (finalBangla) {
@@ -161,5 +166,4 @@ async function searchArabicWord() {
         resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>অর্থ খুঁজে পাওয়া যায়নি, আবার চেষ্টা করুন।</span>";
     }
 }
-
 
