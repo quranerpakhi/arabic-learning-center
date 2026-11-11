@@ -95,7 +95,7 @@ async function searchArabicWord() {
 
     resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>অর্থ খোঁজা হচ্ছে...</span>";
 
-    // ১ম চেষ্টা: গুগল ট্রান্সলেট (সঠিক অ্যারে ব্র্যাকেটসহ)
+    // ১ম চেষ্টা: গুগল ট্রান্সলেট সার্ভার (সবচেয়ে দ্রুত ও নিখুঁত)
     try {
         const googleUrl = `https://googleapis.com{encodeURIComponent(word)}`;
         const response = await fetch(googleUrl);
@@ -110,24 +110,10 @@ async function searchArabicWord() {
             return;
         }
     } catch (e) {
-        console.log("Google API skipped, trying backup...");
+        console.log("Google API failed, trying backup...");
     }
 
-    // ২য় চেষ্টা: Lingva CORS-Free ওপেন সোর্স অনুবাদ সার্ভার
-    try {
-        const lingvaUrl = `https://lingva.ml{encodeURIComponent(word)}`;
-        const res = await fetch(lingvaUrl);
-        const lingvaData = await res.json();
-        
-        if (lingvaData && lingvaData.translation) {
-            resultDiv.innerHTML = `বাংলা অর্থ: <span style="color:#d35400;">${lingvaData.translation}</span>`;
-            return;
-        }
-    } catch (e) {
-        console.log("Lingva API skipped, trying final backup...");
-    }
-
-    // ৩য় চেষ্টা: মাই-মেমোরি সার্ভার
+    // ২য় চেষ্টা (ব্যাকআপ): মাই-মেমোরি সার্ভার
     try {
         const mmUrl = `https://translated.net{encodeURIComponent(word)}&langpair=ar|bn`;
         const mmRes = await fetch(mmUrl);
@@ -141,6 +127,7 @@ async function searchArabicWord() {
         resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>দুঃখিত, এই মুহূর্তে অনুবাদ সার্ভার কাজ করছে না।</span>";
     }
 }
+
 
 
 
