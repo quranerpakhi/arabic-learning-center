@@ -29,6 +29,19 @@
             <a href="#notes" onclick="filterNotes('extra')" class="opt-btn">এক্সট্রা ক্লাস নোট</a>
             <a href="#" id="whatsapp-btn" target="_blank" class="opt-btn wa">WhatsApp Link</a>
             <a href="#" id="meet-btn" target="_blank" class="opt-btn meet">Live Call Link (Google Meet)</a>
+            <a href="#dictionary-section" onclick="toggleDictionary()" class="opt-btn dict">আরবী-বাংলা অভিধান (Dictionary)</a>
+        </div>
+    </section>
+        <!-- আরবী টু বাংলা ডিকশনারি সেকশন -->
+    <section id="dictionary-section" class="dictionary-container" style="display: none;">
+        <div class="dict-box">
+            <h2>📖 আরবী থেকে বাংলা অভিধান</h2>
+            <p>যেকোনো আরবী শব্দ লিখুন এবং সাথে সাথে বাংলা অর্থ জানুন</p>
+            <div class="search-bar">
+                <input type="text" id="arabic-input" placeholder="এখানে আরবী শব্দ লিখুন (যেমন: كتاب, قلم, علم)..." dir="rtl">
+                <button onclick="searchArabicWord()">অর্থ খুঁজুন</button>
+            </div>
+            <div id="dict-result" class="dict-result"></div>
         </div>
     </section>
 
