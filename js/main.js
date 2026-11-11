@@ -41,26 +41,16 @@ function filterNotes(type) {
     });
 }
 
-// নেটলিফাই আইডি ডিটেক্ট করে রিমুভ করার চূড়ান্ত জাভাস্ক্রিপ্ট
-function removeNetlifyBadge() {
-    // নেটলিফাইয়ের নতুন আসল আইডি হলো nf-badge
-    const badge = document.getElementById('nf-badge');
-    if (badge) {
-        badge.remove();
-    }
-    
-    // ব্যাকআপ হিসেবে ক্লাস বা অন্য আইডি খোঁজা
-    const extraBadges = document.querySelectorAll('.nf-badge, [id*="nf-badge"]');
-    extraBadges.forEach(el => el.remove());
+// নেটলিফাই আইফ্রেম ধরে সরাসরি ডিলিট করার আসল স্ক্রিপ্ট
+function destroyNetlifyIframe() {
+    const nlIframes = document.querySelectorAll('iframe[data-nl-ready], iframe[style*="2147483645"]');
+    nlIframes.forEach(iframe => {
+        iframe.remove();
+    });
 }
 
-// পেজ লোড হওয়ার সাথে সাথে এবং প্রতি ৫০০ মিলিমেকেন্ড পর পর এটি স্ক্রিন স্ক্যান করবে
-document.addEventListener("DOMContentLoaded", removeNetlifyBadge);
-window.addEventListener("load", removeNetlifyBadge);
-setInterval(removeNetlifyBadge, 500); 
+document.addEventListener("DOMContentLoaded", destroyNetlifyIframe);
+window.addEventListener("load", destroyNetlifyIframe);
+setInterval(destroyNetlifyBadge, 500); // ব্যাকআপ
+setInterval(destroyNetlifyIframe, 500);
 
-
-// পেজ লোড হওয়ার সাথে সাথে এবং প্রতি ১ সেকেন্ড পর পর এটি ব্যাকগ্রাউন্ডে চেক করবে
-document.addEventListener("DOMContentLoaded", destroyNetlifyBadge);
-window.addEventListener("load", destroyNetlifyBadge);
-setInterval(destroyNetlifyBadge, 1000); // ১ সেকেন্ড পর পর বাটনটি আসলে তা মুছে দেবে
