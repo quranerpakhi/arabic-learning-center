@@ -59,24 +59,40 @@ function toggleDictionary() {
     const dictSection = document.getElementById('dictionary-section');
     if (dictSection.style.display === 'none') {
         dictSection.style.display = 'block';
+        document.getElementById('arabic-input').focus(); // বক্স খোলার সাথে সাথে কার্সর চলে যাবে
     } else {
         dictSection.style.display = 'none';
     }
 }
 
-// আরবী থেকে বাংলা অর্থ বের করার ফাংশন
-function searchArabicWord() {
+let typingTimer; // টাইপিং ট্র্যাক করার জন্য টাইমার
+
+// টাইপ করার সাথে সাথে অটো কাজ করার ফাংশন
+function autoSearchArabic() {
+    clearTimeout(typingTimer); // ইউজার টাইপ করতে থাকলে আগের রিকোয়েস্ট বাতিল করবে
     const word = document.getElementById('arabic-input').value.trim();
     const resultDiv = document.getElementById('dict-result');
-    
+
     if (!word) {
-        resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>অনুগ্রহ করে একটি আরবী শব্দ লিখুন!</span>";
+        resultDiv.innerHTML = ""; // বক্স খালি করলে আগের অর্থ মুছে যাবে
         return;
     }
 
     resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>অর্থ খোঁজা হচ্ছে...</span>";
 
-    // ফ্রি এপিআই এর মাধ্যমে আরবী থেকে বাংলায় অনুবাদ
+    // টাইপ করা থামানোর ঠিক ৫০০ মিলিসেকেন্ড (আধা সেকেন্ড) পর অটোমেটিক অর্থ খুঁজবে
+    typingTimer = setTimeout(() => {
+        searchArabicWord();
+    }, 500);
+}
+
+// আরবী থেকে বাংলা অর্থ বের করার মূল ফাংশন
+function searchArabicWord() {
+    const word = document.getElementById('arabic-input').value.trim();
+    const resultDiv = document.getElementById('dict-result');
+    
+    if (!word) return;
+
     const apiUrl = `https://translated.net{encodeURIComponent(word)}&langpair=ar|bn`;
 
     fetch(apiUrl)
@@ -85,11 +101,12 @@ function searchArabicWord() {
             if (data.responseData && data.responseData.translatedText) {
                 resultDiv.innerHTML = `বাংলা অর্থ: <span style="color:#d35400;">${data.responseData.translatedText}</span>`;
             } else {
-                resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>দুঃখিত, এই শব্দটির অর্থ খুঁজে পাওয়া যায়নি।</span>";
+                resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>দুঃখিত, অর্থ খুঁজে পাওয়া যায়নি।</span>";
             }
         })
         .catch(() => {
-            resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>ইন্টারনেট সংযোগ চেক করে আবার চেষ্টা করুন।</span>";
+            resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>ইন্টারনেট সংযোগ চেক করুন।</span>";
         });
 }
+
 
