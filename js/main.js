@@ -93,33 +93,52 @@ async function searchArabicWord() {
     
     if (!word) return;
 
+    resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>অর্থ খোঁজা হচ্ছে...</span>";
+
+    // ১ম চেষ্টা: গুগল ট্রান্সলেট (সঠিক অ্যারে ব্র্যাকেটসহ)
     try {
-        // প্রথম চেষ্টা: গুগল ট্রান্সলেট সার্ভার
         const googleUrl = `https://googleapis.com{encodeURIComponent(word)}`;
         const response = await fetch(googleUrl);
         const data = await response.json();
         
-        if (data && data[0]) {
-            const translatedWord = data[0].map(item => item[0]).join('');
-            resultDiv.innerHTML = `বাংলা অর্থ: <span style="color:#d35400;">${translatedWord}</span>`;
+        if (data && data[0] && data[0][0] && data[0][0][0]) {
+            let translatedText = "";
+            data[0].forEach(item => {
+                if (item[0]) translatedText += item[0];
+            });
+            resultDiv.innerHTML = `বাংলা অর্থ: <span style="color:#d35400;">${translatedText}</span>`;
             return;
         }
-    } catch (error) {
-        // গুগল ব্লক হলে স্বয়ংক্রিয়ভাবে দ্বিতীয় সার্ভারে চেষ্টা করবে
+    } catch (e) {
+        console.log("Google API skipped, trying backup...");
     }
 
+    // ২য় চেষ্টা: Lingva CORS-Free ওপেন সোর্স অনুবাদ সার্ভার
     try {
-        // দ্বিতীয় চেষ্টা (ব্যাকআপ): মাই-মেমোরি সার্ভার
-        const backupUrl = `https://translated.net{encodeURIComponent(word)}&langpair=ar|bn`;
-        const backupRes = await fetch(backupUrl);
-        const backupData = await backupRes.json();
+        const lingvaUrl = `https://lingva.ml{encodeURIComponent(word)}`;
+        const res = await fetch(lingvaUrl);
+        const lingvaData = await res.json();
+        
+        if (lingvaData && lingvaData.translation) {
+            resultDiv.innerHTML = `বাংলা অর্থ: <span style="color:#d35400;">${lingvaData.translation}</span>`;
+            return;
+        }
+    } catch (e) {
+        console.log("Lingva API skipped, trying final backup...");
+    }
 
-        if (backupData && backupData.responseData && backupData.responseData.translatedText) {
-            resultDiv.innerHTML = `বাংলা অর্থ: <span style="color:#d35400;">${backupData.responseData.translatedText}</span>`;
+    // ৩য় চেষ্টা: মাই-মেমোরি সার্ভার
+    try {
+        const mmUrl = `https://translated.net{encodeURIComponent(word)}&langpair=ar|bn`;
+        const mmRes = await fetch(mmUrl);
+        const mmData = await mmRes.json();
+
+        if (mmData && mmData.responseData && mmData.responseData.translatedText) {
+            resultDiv.innerHTML = `বাংলা অর্থ: <span style="color:#d35400;">${mmData.responseData.translatedText}</span>`;
             return;
         }
     } catch (err) {
-        resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>সার্ভার সংযোগ পাওয়া যাচ্ছে না। ব্রাউজারের Ad-Blocker বন্ধ করে দেখুন।</span>";
+        resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>দুঃখিত, এই মুহূর্তে অনুবাদ সার্ভার কাজ করছে না।</span>";
     }
 }
 
