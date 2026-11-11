@@ -93,20 +93,23 @@ function searchArabicWord() {
     
     if (!word) return;
 
-    const apiUrl = `https://translated.net{encodeURIComponent(word)}&langpair=ar|bn`;
+    // গুগল ট্রান্সলেটের ফ্রি ও আনলিমিটেড এপিআই লিংক
+    const apiUrl = `https://googleapis.com{encodeURIComponent(word)}`;
 
     fetch(apiUrl)
         .then(response => response.json())
         .then(data => {
-            if (data.responseData && data.responseData.translatedText) {
-                resultDiv.innerHTML = `বাংলা অর্থ: <span style="color:#d35400;">${data.responseData.translatedText}</span>`;
+            if (data && data[0] && data[0][0] && data[0][0][0]) {
+                const translatedWord = data[0][0][0];
+                resultDiv.innerHTML = `বাংলা অর্থ: <span style="color:#d35400;">${translatedWord}</span>`;
             } else {
                 resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>দুঃখিত, অর্থ খুঁজে পাওয়া যায়নি।</span>";
             }
         })
         .catch(() => {
-            resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>ইন্টারনেট সংযোগ চেক করুন।</span>";
+            resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>অনুবাদ করতে সমস্যা হচ্ছে, আবার চেষ্টা করুন।</span>";
         });
 }
+
 
 
