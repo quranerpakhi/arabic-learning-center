@@ -86,16 +86,7 @@ function autoSearchArabic() {
     }, 500);
 }
 
-// আরবী থেকে বাংলা অর্থ বের করার মূল ফাংশন
-async function searchArabicWord() {
-    const word = document.getElementById('arabic-input').value.trim();
-    const resultDiv = document.getElementById('dict-result');
-    
-    if (!word) return;
-
-    resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>অর্থ খোঁজা হচ্ছে...</span>";
-
-    // নিজস্ব নিখুঁত শব্দের তালিকা (হরকত ছাড়া ও হরকতসহ উভয়ই লিখতে পারেন)
+// নিজস্ব নিখুঁত শব্দের তালিকা (হরকত ছাড়া ও হরকতসহ)
 const customDictionary = {
     "كتب": "বইসমূহ / অনেক বই (كتاب এর বহুবচন)",
     "كُتُبٌ": "বইসমূহ / অনেক বই (كتاب এর বহুবচন)",
@@ -103,7 +94,8 @@ const customDictionary = {
     "كِتَابٌ": "একটি বই",
     "أقلام": "কলমসমূহ (قلم এর বহুবচন)",
     "أَقْلَامٌ": "কলমসমূহ (قلم এর বহুবচন)",
-    "أبواب": "দরজাসমূহ (باب এর বহুবচন)"
+    "أبواب": "দরজাসমূহ (باب এর বহুবচন)",
+    "أَبْوَابٌ": "দরজাসমূহ (باب এর বহুবচন)"
 };
 
 async function searchArabicWord() {
@@ -112,19 +104,22 @@ async function searchArabicWord() {
     
     if (!rawWord) return;
 
-    // আরবী হরকত (যের, যবর, পেশ, তানভীন) পরিষ্কার করার কোড
+    // আরবী হরকত ও তানভীন পরিষ্কার করার নির্ভুল কোড
     const cleanWord = rawWord.replace(/[\u064B-\u065F\u0670]/g, "");
 
     // ১ম ধাপ: প্রথমে আপনার নিজস্ব তালিকায় শব্দটি খুঁজবে
-    if (customDictionary[rawWord] || customDictionary[cleanWord]) {
-        const exactMeaning = customDictionary[rawWord] || customDictionary[cleanWord];
-        resultDiv.innerHTML = `বাংলা অর্থ: <span style="color:#d35400;">${exactMeaning}</span>`;
+    if (customDictionary[rawWord]) {
+        resultDiv.innerHTML = `বাংলা অর্থ: <span style="color:#d35400;">${customDictionary[rawWord]}</span>`;
+        return;
+    }
+    if (customDictionary[cleanWord]) {
+        resultDiv.innerHTML = `বাংলা অর্থ: <span style="color:#d35400;">${customDictionary[cleanWord]}</span>`;
         return;
     }
 
     resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>অর্থ খোঁজা হচ্ছে...</span>";
 
-    // ২য় ধাপ: তালিকায় না থাকলে গুগল ট্রান্সলেট থেকে আনবে (হরকত ছাড়া মূল শব্দ দিয়ে)
+    // ২য় ধাপ: তালিকায় না থাকলে গুগল ট্রান্সলেট থেকে আনবে
     try {
         const baseGoogle = ["https:/", "translate." + "googleapis.com", "translate_a", "single"].join("/");
         const googleUrl = `${baseGoogle}?client=gtx&sl=ar&tl=bn&dt=t&q=${encodeURIComponent(cleanWord)}`;
@@ -132,7 +127,7 @@ async function searchArabicWord() {
         const response = await fetch(googleUrl);
         const data = await response.json();
         
-        if (data && data[0] && data[0][0] && data[0][0][0]) {
+        if (data && data[0]) {
             let translatedText = "";
             data[0].forEach(item => {
                 if (item[0]) translatedText += item[0];
@@ -142,41 +137,6 @@ async function searchArabicWord() {
         }
     } catch (e) {
         resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>অর্থ খুঁজে পাওয়া যায়নি।</span>";
-    }
-}
-
-    // ১ম চেষ্টা: গুগল ট্রান্সলেট সার্ভার (সবচেয়ে দ্রুত ও নিখুঁত)
-    try {
-        const baseGoogle = ["https:/", "translate." + "googleapis.com", "translate_a", "single"].join("/");
-        const googleUrl = `${baseGoogle}?client=gtx&sl=ar&tl=bn&dt=t&q=${encodeURIComponent(word)}`;
-        const response = await fetch(googleUrl);
-        const data = await response.json();
-        
-        if (data && data[0] && data[0][0] && data[0][0][0]) {
-            let translatedText = "";
-            data[0].forEach(item => {
-                if (item[0]) translatedText += item[0];
-            });
-            resultDiv.innerHTML = `বাংলা অর্থ: <span style="color:#d35400;">${translatedText}</span>`;
-            return;
-        }
-    } catch (e) {
-        console.log("Google API failed, trying backup...");
-    }
-
-    // ২য় চেষ্টা (ব্যাকআপ): মাই-মেমোরি সার্ভার
-    try {
-        const baseMm = ["https:/", "api.mymemory." + "translated.net", "get"].join("/");
-        const mmUrl = `${baseMm}?q=${encodeURIComponent(word)}&langpair=ar|bn`;
-        const mmRes = await fetch(mmUrl);
-        const mmData = await mmRes.json();
-
-        if (mmData && mmData.responseData && mmData.responseData.translatedText) {
-            resultDiv.innerHTML = `বাংলা অর্থ: <span style="color:#d35400;">${mmData.responseData.translatedText}</span>`;
-            return;
-        }
-    } catch (err) {
-        resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>দুঃখিত, এই মুহূর্তে অনুবাদ সার্ভার কাজ করছে না।</span>";
     }
 }
 
