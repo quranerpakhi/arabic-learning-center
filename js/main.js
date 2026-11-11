@@ -74,16 +74,17 @@ function autoSearchArabic() {
     }, 500);
 }
 
-// ৫. নিজস্ব নিখুঁত শব্দের তালিকা
+// ৫. নিজস্ব নিখুঁত শব্দের তালিকা (কুরআনের ও ক্লাসের গুরুত্বপূর্ণ শব্দসমূহ)
 const customDictionary = {
+    "تلقف": "গিলে ফেলা / লুফে নেওয়া (যেমন: মূসা আ.-এর লাঠি জাদুকরদের সাপগুলো গিলে ফেলেছিল)",
+    "تَلْقَفُ": "গিলে ফেলা / লুফে নেওয়া",
+    "تَلۡقَفُ": "গিলে ফেলা / লুফে নেওয়া",
     "كتب": "বইসমূহ / অনেক বই (كتاب এর বহুবচন)",
     "كُتُبٌ": "বইসমূহ / অনেক বই (كتاب এর বহুবচন)",
     "كتاب": "একটি বই",
     "كِتَابٌ": "একটি বই",
     "أقلام": "কলমসমূহ (قلم এর বহুবচন)",
-    "أَقْلَامٌ": "কলমসমূহ (قلم এর বহুবচন)",
-    "أبواب": "দরজাসমূহ (باب এর বহুবচন)",
-    "أَبْوَابٌ": "দরজাসমূহ (باب এর বহুবচন)"
+    "أبواب": "দরজাসমূহ (باب এর বহুবচন)"
 };
 
 // ৬. আরবী থেকে বাংলা অর্থ বের করার মূল ফাংশন
@@ -93,8 +94,8 @@ async function searchArabicWord() {
     
     if (!rawWord) return;
 
-    // আরবী হরকত ও তানভীন পরিষ্কার করার নির্ভুল কোড
-    const cleanWord = rawWord.replace(/[\u064B-\u065F\u0670]/g, "");
+    // কুরআনিক বিশেষ চিহ্ন ও হরকত পরিষ্কার করে মূল অক্ষর বের করা (শুধুমাত্র নিজস্ব তালিকায় খোঁজার জন্য)
+    const cleanWord = rawWord.replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, "");
 
     // ১ম ধাপ: প্রথমে আপনার নিজস্ব তালিকায় শব্দটি খুঁজবে
     if (customDictionary[rawWord]) {
@@ -108,10 +109,10 @@ async function searchArabicWord() {
 
     resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>অর্থ খোঁজা হচ্ছে...</span>";
 
-    // ২য় ধাপ: তালিকায় না থাকলে গুগল ট্রান্সলেট থেকে আনবে
+    // ২য় ধাপ: গুগল ট্রান্সলেটে হরকতসহ আসল শব্দটি (rawWord) পাঠানো হবে, যাতে অর্থ না বদলায়
     try {
         const baseGoogle = ["https:/", "translate." + "googleapis.com", "translate_a", "single"].join("/");
-        const googleUrl = `${baseGoogle}?client=gtx&sl=ar&tl=bn&dt=t&q=${encodeURIComponent(cleanWord)}`;
+        const googleUrl = `${baseGoogle}?client=gtx&sl=ar&tl=bn&dt=t&q=${encodeURIComponent(rawWord)}`;
         
         const response = await fetch(googleUrl);
         const data = await response.json();
@@ -128,3 +129,4 @@ async function searchArabicWord() {
         resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>অর্থ খুঁজে পাওয়া যায়নি।</span>";
     }
 }
+
