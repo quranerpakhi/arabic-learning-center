@@ -87,28 +87,40 @@ function autoSearchArabic() {
 }
 
 // আরবী থেকে বাংলা অর্থ বের করার মূল ফাংশন
-function searchArabicWord() {
+async function searchArabicWord() {
     const word = document.getElementById('arabic-input').value.trim();
     const resultDiv = document.getElementById('dict-result');
     
     if (!word) return;
 
-    // গুগল ট্রান্সলেটের ফ্রি ও আনলিমিটেড এপিআই লিংক
-    const apiUrl = `https://googleapis.com{encodeURIComponent(word)}`;
+    try {
+        // প্রথম চেষ্টা: গুগল ট্রান্সলেট সার্ভার
+        const googleUrl = `https://googleapis.com{encodeURIComponent(word)}`;
+        const response = await fetch(googleUrl);
+        const data = await response.json();
+        
+        if (data && data[0]) {
+            const translatedWord = data[0].map(item => item[0]).join('');
+            resultDiv.innerHTML = `বাংলা অর্থ: <span style="color:#d35400;">${translatedWord}</span>`;
+            return;
+        }
+    } catch (error) {
+        // গুগল ব্লক হলে স্বয়ংক্রিয়ভাবে দ্বিতীয় সার্ভারে চেষ্টা করবে
+    }
 
-    fetch(apiUrl)
-        .then(response => response.json())
-        .then(data => {
-            if (data && data[0] && data[0][0] && data[0][0][0]) {
-                const translatedWord = data[0][0][0];
-                resultDiv.innerHTML = `বাংলা অর্থ: <span style="color:#d35400;">${translatedWord}</span>`;
-            } else {
-                resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>দুঃখিত, অর্থ খুঁজে পাওয়া যায়নি।</span>";
-            }
-        })
-        .catch(() => {
-            resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>অনুবাদ করতে সমস্যা হচ্ছে, আবার চেষ্টা করুন।</span>";
-        });
+    try {
+        // দ্বিতীয় চেষ্টা (ব্যাকআপ): মাই-মেমোরি সার্ভার
+        const backupUrl = `https://translated.net{encodeURIComponent(word)}&langpair=ar|bn`;
+        const backupRes = await fetch(backupUrl);
+        const backupData = await backupRes.json();
+
+        if (backupData && backupData.responseData && backupData.responseData.translatedText) {
+            resultDiv.innerHTML = `বাংলা অর্থ: <span style="color:#d35400;">${backupData.responseData.translatedText}</span>`;
+            return;
+        }
+    } catch (err) {
+        resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>সার্ভার সংযোগ পাওয়া যাচ্ছে না। ব্রাউজারের Ad-Blocker বন্ধ করে দেখুন।</span>";
+    }
 }
 
 
