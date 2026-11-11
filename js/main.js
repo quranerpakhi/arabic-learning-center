@@ -92,55 +92,60 @@ async function searchArabicWord() {
         return;
     }
 
-    resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>সঠিক অর্থ খোঁজা হচ্ছে...</span>";
+    resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>সঠিক ব্যাকরণগত অর্থ খোঁজা হচ্ছে...</span>";
 
     try {
         const baseGoogle = ["https:/", "translate." + "googleapis.com", "translate_a", "single"].join("/");
         
-        // ধাপ ১: আরবী থেকে ইংরেজি অর্থ বের করা
-        const arToEnUrl = `${baseGoogle}?client=gtx&sl=ar&tl=en&dt=t&dt=bd&q=${encodeURIComponent(rawWord)}`;
-        const enResponse = await fetch(arToEnUrl);
-        const enData = await enResponse.json();
-        
-        let englishMeaning = "";
-        let posTag = "";
+        // ধাপ ১: শব্দটির পদ (Verb নাকি Noun) এবং মূল অর্থ পরীক্ষা করা
+        const checkUrl = `${baseGoogle}?client=gtx&sl=ar&tl=en&dt=t&dt=bd&q=${encodeURIComponent(rawWord)}`;
+        const checkRes = await fetch(checkUrl);
+        const checkData = await checkRes.json();
 
-        // শুধু মূল ইংরেজি অর্থটুকু আলাদা করা
-        if (enData && enData[0]) {
-            enData[0].forEach(item => {
-                if (item && item[0]) englishMeaning += item[0];
+        let posTag = "";
+        let isVerb = false;
+
+        if (checkData && checkData[1] && checkData[1][0] && checkData[1][0][0]) {
+            const rawPos = checkData[1][0][0];
+            if (rawPos === "verb") {
+                isVerb = true;
+                posTag = "ক্রিয়া (Verb)";
+            } else if (rawPos === "noun") {
+                posTag = "বিশেষ্য (Noun)";
+            } else {
+                posTag = rawPos;
+            }
+        }
+
+        // ধাপ ২: যদি শব্দটি ক্রিয়াপদ (Verb) হয়, তবে গুগলকে ক্রিয়ার সঠিক রূপ চেনানোর কৌশল
+        let queryToTranslate = rawWord;
+        if (isVerb && !rawWord.includes(" ")) {
+            // ক্রিয়াপদের সাথে একটি ছোট প্রসঙ্গ যোগ করে সরাসরি বাংলায় অনুবাদ করা হচ্ছে
+            queryToTranslate = `هو ${rawWord}`;
+        }
+
+        const bnUrl = `${baseGoogle}?client=gtx&sl=ar&tl=bn&dt=t&q=${encodeURIComponent(queryToTranslate)}`;
+        const bnRes = await fetch(bnUrl);
+        const bnData = await bnRes.json();
+
+        let finalBangla = "";
+        if (bnData && bnData[0]) {
+            bnData[0].forEach(item => {
+                if (item && item[0]) finalBangla += item[0];
             });
         }
 
-        // পদ প্রকরণ (Verb নাকি Noun) আলাদা করা
-        if (enData && enData[1] && enData[1][0] && enData[1][0][0]) {
-            const rawPos = enData[1][0][0];
-            posTag = rawPos === "verb" ? "ক্রিয়া (Verb)" : (rawPos === "noun" ? "বিশেষ্য (Noun)" : rawPos);
-        }
-
-        // ধাপ ২: ইংরেজি অর্থটিকে বাংলায় রূপান্তর করা
-        if (englishMeaning) {
-            const enToBnUrl = `${baseGoogle}?client=gtx&sl=en&tl=bn&dt=t&q=${encodeURIComponent(englishMeaning)}`;
-            const bnResponse = await fetch(enToBnUrl);
-            const bnData = await bnResponse.json();
-
-            let finalBangla = "";
-            if (bnData && bnData[0]) {
-                bnData[0].forEach(item => {
-                    if (item && item[0]) finalBangla += item[0];
-                });
+        // যদি ক্রিয়াপদ হওয়ার কারণে শুরুতে 'সে ' যুক্ত থাকে, তবে তা সুন্দরভাবে সাজিয়ে দেখানো
+        if (finalBangla) {
+            let outputHTML = `বাংলা অর্থ: <span style="color:#d35400; font-size:22px;">${finalBangla}</span>`;
+            if (posTag) {
+                outputHTML += `<div style="font-size:14px; color:#555; margin-top:6px;">পদ প্রকরণ: <strong>${posTag}</strong></div>`;
             }
-
-            if (finalBangla) {
-                let outputHTML = `বাংলা অর্থ: <span style="color:#d35400; font-size:22px;">${finalBangla}</span>`;
-                outputHTML += `<div style="font-size:14px; color:#555; margin-top:6px;">ইংরেজি রূপ: <strong>${englishMeaning}</strong> ${posTag ? `| পদ: <strong>${posTag}</strong>` : ''}</div>`;
-                resultDiv.innerHTML = outputHTML;
-                return;
-            }
+            resultDiv.innerHTML = outputHTML;
+            return;
         }
     } catch (e) {
         resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>অর্থ খুঁজে পাওয়া যায়নি, আবার চেষ্টা করুন।</span>";
     }
 }
-
 
