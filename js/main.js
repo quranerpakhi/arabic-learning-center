@@ -95,6 +95,56 @@ async function searchArabicWord() {
 
     resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>অর্থ খোঁজা হচ্ছে...</span>";
 
+    // নিজস্ব নিখুঁত শব্দের তালিকা (হরকত ছাড়া ও হরকতসহ উভয়ই লিখতে পারেন)
+const customDictionary = {
+    "كتب": "বইসমূহ / অনেক বই (كتاب এর বহুবচন)",
+    "كُتُبٌ": "বইসমূহ / অনেক বই (كتاب এর বহুবচন)",
+    "كتاب": "একটি বই",
+    "كِتَابٌ": "একটি বই",
+    "أقلام": "কলমসমূহ (قلم এর বহুবচন)",
+    "أَقْلَامٌ": "কলমসমূহ (قلم এর বহুবচন)",
+    "أبواب": "দরজাসমূহ (باب এর বহুবচন)"
+};
+
+async function searchArabicWord() {
+    const rawWord = document.getElementById('arabic-input').value.trim();
+    const resultDiv = document.getElementById('dict-result');
+    
+    if (!rawWord) return;
+
+    // আরবী হরকত (যের, যবর, পেশ, তানভীন) পরিষ্কার করার কোড
+    const cleanWord = rawWord.replace(/[\u064B-\u065F\u0670]/g, "");
+
+    // ১ম ধাপ: প্রথমে আপনার নিজস্ব তালিকায় শব্দটি খুঁজবে
+    if (customDictionary[rawWord] || customDictionary[cleanWord]) {
+        const exactMeaning = customDictionary[rawWord] || customDictionary[cleanWord];
+        resultDiv.innerHTML = `বাংলা অর্থ: <span style="color:#d35400;">${exactMeaning}</span>`;
+        return;
+    }
+
+    resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>অর্থ খোঁজা হচ্ছে...</span>";
+
+    // ২য় ধাপ: তালিকায় না থাকলে গুগল ট্রান্সলেট থেকে আনবে (হরকত ছাড়া মূল শব্দ দিয়ে)
+    try {
+        const baseGoogle = ["https:/", "translate." + "googleapis.com", "translate_a", "single"].join("/");
+        const googleUrl = `${baseGoogle}?client=gtx&sl=ar&tl=bn&dt=t&q=${encodeURIComponent(cleanWord)}`;
+        
+        const response = await fetch(googleUrl);
+        const data = await response.json();
+        
+        if (data && data[0] && data[0][0] && data[0][0][0]) {
+            let translatedText = "";
+            data[0].forEach(item => {
+                if (item[0]) translatedText += item[0];
+            });
+            resultDiv.innerHTML = `বাংলা অর্থ: <span style="color:#d35400;">${translatedText}</span>`;
+            return;
+        }
+    } catch (e) {
+        resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>অর্থ খুঁজে পাওয়া যায়নি।</span>";
+    }
+}
+
     // ১ম চেষ্টা: গুগল ট্রান্সলেট সার্ভার (সবচেয়ে দ্রুত ও নিখুঁত)
     try {
         const baseGoogle = ["https:/", "translate." + "googleapis.com", "translate_a", "single"].join("/");
