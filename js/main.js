@@ -97,7 +97,10 @@ async function searchArabicWord() {
     try {
         const baseGoogle = ["https:/", "translate." + "googleapis.com", "translate_a", "single"].join("/");
         
-        // ধাপ ১: শব্দটির পদ (Verb নাকি Noun) এবং মূল অর্থ পরীক্ষা করা
+        // আরবী ব্যাকরণের নিয়ম: শব্দে তানভীন (ً ٌ ٍ) অথবা শুরুতে 'ال' থাকলে সেটি নিশ্চিতভাবে বিশেষ্য (Noun)
+        const isDefinitelyNoun = /[\u064B\u064C\u064D]/.test(rawWord) || rawWord.startsWith("ال");
+
+        // ধাপ ১: শব্দটির পদ প্রকরণ পরীক্ষা করা
         const checkUrl = `${baseGoogle}?client=gtx&sl=ar&tl=en&dt=t&dt=bd&q=${encodeURIComponent(rawWord)}`;
         const checkRes = await fetch(checkUrl);
         const checkData = await checkRes.json();
@@ -105,8 +108,11 @@ async function searchArabicWord() {
         let posTag = "";
         let isVerb = false;
 
-        if (checkData && checkData[1] && checkData[1][0] && checkData[1][0][0]) {
-            const rawPos = checkData[1][0][0];
+        if (isDefinitelyNoun) {
+            isVerb = false;
+            posTag = "বিশেষ্য (Noun)";
+        } else if (checkData && checkData && checkData && checkData) {
+            const rawPos = checkData;
             if (rawPos === "verb") {
                 isVerb = true;
                 posTag = "ক্রিয়া (Verb)";
@@ -117,11 +123,14 @@ async function searchArabicWord() {
             }
         }
 
-        // ধাপ ২: যদি শব্দটি ক্রিয়াপদ (Verb) হয়, তবে গুগলকে ক্রিয়ার সঠিক রূপ চেনানোর কৌশল
+        // ধাপ ২: ক্রিয়া এবং বিশেষ্যের জন্য আলাদা প্রসঙ্গ (Context) তৈরি করে নিখুঁত বাংলা অর্থ আনা
         let queryToTranslate = rawWord;
-        if (isVerb && !rawWord.includes(" ")) {
-            // ক্রিয়াপদের সাথে একটি ছোট প্রসঙ্গ যোগ করে সরাসরি বাংলায় অনুবাদ করা হচ্ছে
-            queryToTranslate = `هو ${rawWord}`;
+        if (!rawWord.includes(" ")) {
+            if (isVerb) {
+                queryToTranslate = `هو ${rawWord}`; // ক্রিয়াপদের সঠিক রূপের জন্য
+            } else if (isDefinitelyNoun) {
+                queryToTranslate = `هذه ${rawWord}`; // বিশেষ্য ও বহুবচন চেনানোর জন্য
+            }
         }
 
         const bnUrl = `${baseGoogle}?client=gtx&sl=ar&tl=bn&dt=t&q=${encodeURIComponent(queryToTranslate)}`;
@@ -129,13 +138,17 @@ async function searchArabicWord() {
         const bnData = await bnRes.json();
 
         let finalBangla = "";
-        if (bnData && bnData[0]) {
-            bnData[0].forEach(item => {
-                if (item && item[0]) finalBangla += item[0];
+        if (bnData && bnData) {
+            bnData.forEach(item => {
+                if (item && item) finalBangla += item;
             });
         }
 
-        // যদি ক্রিয়াপদ হওয়ার কারণে শুরুতে 'সে ' যুক্ত থাকে, তবে তা সুন্দরভাবে সাজিয়ে দেখানো
+        // বিশেষ্যের শুরুতে প্রসঙ্গ হিসেবে যুক্ত হওয়া 'এই ' বা 'এগুলো ' শব্দটি পরিষ্কার করা
+        if (isDefinitelyNoun && finalBangla) {
+            finalBangla = finalBangla.replace(/^(এই|এগুলো|এটি|এসব)\s+/g, "");
+        }
+
         if (finalBangla) {
             let outputHTML = `বাংলা অর্থ: <span style="color:#d35400; font-size:22px;">${finalBangla}</span>`;
             if (posTag) {
@@ -148,4 +161,5 @@ async function searchArabicWord() {
         resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>অর্থ খুঁজে পাওয়া যায়নি, আবার চেষ্টা করুন।</span>";
     }
 }
+
 
