@@ -197,5 +197,22 @@ iframe[style*="z-index: 2147483645"] {
     min-height: 30px;
 }
 
+/* মোবাইল স্ক্রিনের জন্য ডিকশনারি সার্চ বক্স এবং বাটন রেসপনসিভ করার কোড */
+@media (max-width: 600px) {
+    .search-bar {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .search-bar input,
+    .search-bar button {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .dict-box {
+        padding: 20px;
+    }
+}
 
 
