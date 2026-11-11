@@ -74,59 +74,72 @@ function autoSearchArabic() {
     }, 500);
 }
 
-// ৫. নিজস্ব নিখুঁত শব্দের তালিকা (কুরআনের ও ক্লাসের গুরুত্বপূর্ণ শব্দসমূহ)
+// ৫. নিজস্ব বিশেষ শব্দের ব্যাকআপ তালিকা (যেগুলো কুরআনে বা ক্লাসে বেশি ব্যবহৃত হয়)
 const customDictionary = {
-    "تلقف": "গিলে ফেলা / লুফে নেওয়া (যেমন: মূসা আ.-এর লাঠি জাদুকরদের সাপগুলো গিলে ফেলেছিল)",
     "تَلْقَفُ": "গিলে ফেলা / লুফে নেওয়া",
-    "تَلۡقَفُ": "গিলে ফেলা / লুফে নেওয়া",
-    "كتب": "বইসমূহ / অনেক বই (كتاب এর বহুবচন)",
-    "كُتُبٌ": "বইসমূহ / অনেক বই (كتاب এর বহুবচন)",
-    "كتاب": "একটি বই",
-    "كِتَابٌ": "একটি বই",
-    "أقلام": "কলমসমূহ (قلم এর বহুবচন)",
-    "أبواب": "দরজাসমূহ (باب এর বহুবচন)"
+    "تَلۡقَفُ": "গিলে ফেলা / লুফে নেওয়া"
 };
 
-// ৬. আরবী থেকে বাংলা অর্থ বের করার মূল ফাংশন
+// ৬. পৃথিবীর যেকোনো আরবী শব্দের নিখুঁত ও বিস্তারিত বাংলা অর্থ বের করার ফাংশন
 async function searchArabicWord() {
     const rawWord = document.getElementById('arabic-input').value.trim();
     const resultDiv = document.getElementById('dict-result');
     
     if (!rawWord) return;
 
-    // কুরআনিক বিশেষ চিহ্ন ও হরকত পরিষ্কার করে মূল অক্ষর বের করা (শুধুমাত্র নিজস্ব তালিকায় খোঁজার জন্য)
-    const cleanWord = rawWord.replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, "");
-
-    // ১ম ধাপ: প্রথমে আপনার নিজস্ব তালিকায় শব্দটি খুঁজবে
+    // বিশেষ তালিকায় থাকলে সেটি আগে দেখাবে
     if (customDictionary[rawWord]) {
         resultDiv.innerHTML = `বাংলা অর্থ: <span style="color:#d35400;">${customDictionary[rawWord]}</span>`;
         return;
     }
-    if (customDictionary[cleanWord]) {
-        resultDiv.innerHTML = `বাংলা অর্থ: <span style="color:#d35400;">${customDictionary[cleanWord]}</span>`;
-        return;
-    }
 
-    resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>অর্থ খোঁজা হচ্ছে...</span>";
+    resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>সঠিক ব্যাকরণগত অর্থ খোঁজা হচ্ছে...</span>";
 
-    // ২য় ধাপ: গুগল ট্রান্সলেটে হরকতসহ আসল শব্দটি (rawWord) পাঠানো হবে, যাতে অর্থ না বদলায়
     try {
+        // গুগল ডিকশনারি ইঞ্জিন (dt=t এর সাথে dt=bd যুক্ত করা হয়েছে যাতে একবচন, বহুবচন ও ক্রিয়ার সব অর্থ আসে)
         const baseGoogle = ["https:/", "translate." + "googleapis.com", "translate_a", "single"].join("/");
-        const googleUrl = `${baseGoogle}?client=gtx&sl=ar&tl=bn&dt=t&q=${encodeURIComponent(rawWord)}`;
+        const googleUrl = `${baseGoogle}?client=gtx&sl=ar&tl=bn&dt=t&dt=bd&q=${encodeURIComponent(rawWord)}`;
         
         const response = await fetch(googleUrl);
         const data = await response.json();
         
+        let mainMeaning = "";
+        let extraMeanings = [];
+
+        // মূল অর্থ সংগ্রহ করা
         if (data && data[0]) {
-            let translatedText = "";
             data[0].forEach(item => {
-                if (item[0]) translatedText += item[0];
+                if (item[0]) mainMeaning += item[0];
             });
-            resultDiv.innerHTML = `বাংলা অর্থ: <span style="color:#d35400;">${translatedText}</span>`;
+        }
+
+        // ডিকশনারির বিস্তারিত অর্থ ও ক্রিয়ার রূপ (Noun, Verb, Plural ইত্যাদি) সংগ্রহ করা
+        if (data && data[1]) {
+            data[1].forEach(category => {
+                const partOfSpeech = category[0]; // যেমন: verb, noun
+                const wordsList = category[1];    // সমার্থক ও নিখুঁত অর্থের তালিকা
+                if (wordsList && wordsList.length > 0) {
+                    const topWords = wordsList.slice(0, 4).join(", ");
+                    let banglaPos = partOfSpeech === "verb" ? "ক্রিয়া" : (partOfSpeech === "noun" ? "বিশেষ্য" : partOfSpeech);
+                    extraMeanings.push(`<div style="font-size:15px; color:#2c3e50; margin-top:6px;"><strong>[${banglaPos}]:</strong> ${topWords}</div>`);
+                }
+            });
+        }
+
+        if (mainMeaning) {
+            let finalHTML = `বাংলা অর্থ: <span style="color:#d35400; font-size:22px;">${mainMeaning}</span>`;
+            
+            // যদি অতিরিক্ত ব্যাকরণগত অর্থ পাওয়া যায় তবে সেগুলোও নিচে দেখাবে
+            if (extraMeanings.length > 0) {
+                finalHTML += `<div style="margin-top:10px; padding-top:8px; border-top:1px solid #eee; text-align:center;">${extraMeanings.join("")}</div>`;
+            }
+            
+            resultDiv.innerHTML = finalHTML;
             return;
         }
     } catch (e) {
-        resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>অর্থ খুঁজে পাওয়া যায়নি।</span>";
+        resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>অর্থ খুঁজে পাওয়া যায়নি, আবার চেষ্টা করুন।</span>";
     }
 }
+
 
