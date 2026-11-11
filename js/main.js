@@ -92,39 +92,42 @@ async function searchArabicWord() {
         return;
     }
 
-    resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>সঠিক ব্যাকরণগত অর্থ খোঁজা হচ্ছে...</span>";
+    resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>সঠিক অর্থ খোঁজা হচ্ছে...</span>";
 
     try {
-        // ধাপ ১: প্রথমে আরবী থেকে ইংরেজিতে অনুবাদ (ইংরেজিতে আরবীর একবচন, বহুবচন ও ক্রিয়া ১০০% নিখুঁত আসে)
         const baseGoogle = ["https:/", "translate." + "googleapis.com", "translate_a", "single"].join("/");
-        const arToEnUrl = `${baseGoogle}?client=gtx&sl=ar&tl=en&dt=t&dt=bd&q=${encodeURIComponent(rawWord)}`;
         
+        // ধাপ ১: আরবী থেকে ইংরেজি অর্থ বের করা
+        const arToEnUrl = `${baseGoogle}?client=gtx&sl=ar&tl=en&dt=t&dt=bd&q=${encodeURIComponent(rawWord)}`;
         const enResponse = await fetch(arToEnUrl);
         const enData = await enResponse.json();
         
         let englishMeaning = "";
         let posTag = "";
 
-        if (enData && enData && enData && enData) {
-            englishMeaning = enData;
+        // শুধু মূল ইংরেজি অর্থটুকু আলাদা করা
+        if (enData && enData[0]) {
+            enData[0].forEach(item => {
+                if (item && item[0]) englishMeaning += item[0];
+            });
         }
 
-        // ইংরেজি থেকে পদ প্রকরণ (Verb নাকি Noun) শনাক্ত করা
-        if (enData && enData && enData) {
-            const rawPos = enData;
+        // পদ প্রকরণ (Verb নাকি Noun) আলাদা করা
+        if (enData && enData[1] && enData[1][0] && enData[1][0][0]) {
+            const rawPos = enData[1][0][0];
             posTag = rawPos === "verb" ? "ক্রিয়া (Verb)" : (rawPos === "noun" ? "বিশেষ্য (Noun)" : rawPos);
         }
 
-        // ধাপ ২: প্রাপ্ত নিখুঁত ইংরেজি অর্থটিকে বাংলায় রূপান্তর করা
+        // ধাপ ২: ইংরেজি অর্থটিকে বাংলায় রূপান্তর করা
         if (englishMeaning) {
             const enToBnUrl = `${baseGoogle}?client=gtx&sl=en&tl=bn&dt=t&q=${encodeURIComponent(englishMeaning)}`;
             const bnResponse = await fetch(enToBnUrl);
             const bnData = await bnResponse.json();
 
             let finalBangla = "";
-            if (bnData && bnData) {
-                bnData.forEach(item => {
-                    if (item) finalBangla += item;
+            if (bnData && bnData[0]) {
+                bnData[0].forEach(item => {
+                    if (item && item[0]) finalBangla += item[0];
                 });
             }
 
