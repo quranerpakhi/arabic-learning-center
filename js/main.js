@@ -1,24 +1,27 @@
-// ওয়েবসাইট লোড হওয়ার সাথে সাথে JSON থেকে ডাটা রিড করবে
+// ১. ওয়েবসাইট লোড হওয়ার সাথে সাথে JSON থেকে ক্লাস নোট ও লিংক লোড করার কোড
 document.addEventListener("DOMContentLoaded", function() {
     fetch('data/data.json')
         .then(response => response.json())
         .then(data => {
-            window.allData = data; // ডাটা গ্লোবালি সেভ রাখা হলো
-            
-            // হোয়াটসঅ্যাপ এবং গুগল মিট লিংক অটো আপডেট
-            document.getElementById('whatsapp-btn').href = data.live_classes.whatsapp_link;
-            document.getElementById('meet-btn').href = data.live_classes.google_meet_link;
-            
-            // শুরুতে রেগুলার নোটগুলো দেখানো হবে
+            window.allData = data;
+            if(document.getElementById('whatsapp-btn')) {
+                document.getElementById('whatsapp-btn').href = data.live_classes.whatsapp_link;
+            }
+            if(document.getElementById('meet-btn')) {
+                document.getElementById('meet-btn').href = data.live_classes.google_meet_link;
+            }
             filterNotes('regular');
-        });
+        })
+        .catch(err => console.log("JSON load error:", err));
 });
 
-// বাটন ক্লিকে রেগুলার বা এক্সট্রা নোট ফিল্টার করার ফাংশন
+// ২. রেগুলার বা এক্সট্রা নোট ফিল্টার করার ফাংশন
 function filterNotes(type) {
     const container = document.getElementById('notes-container');
     const title = document.getElementById('section-title');
-    container.innerHTML = ""; // আগের বক্সগুলো মুছে ফেলা
+    if (!container || !window.allData) return;
+    
+    container.innerHTML = "";
     
     let notes = [];
     if(type === 'regular') {
@@ -29,7 +32,6 @@ function filterNotes(type) {
         notes = window.allData.extra_notes;
     }
     
-    // লুপ চালিয়ে বক্স বা কার্ড তৈরি করা (Nexaverse স্টাইলে)
     notes.forEach(note => {
         const card = document.createElement('div');
         card.className = 'note-card';
@@ -41,52 +43,38 @@ function filterNotes(type) {
     });
 }
 
-// নেটলিফাই আইফ্রেম ধরে সরাসরি ডিলিট করার আসল স্ক্রিপ্ট
-function destroyNetlifyIframe() {
-    const nlIframes = document.querySelectorAll('iframe[data-nl-ready], iframe[style*="2147483645"]');
-    nlIframes.forEach(iframe => {
-        iframe.remove();
-    });
-}
-
-document.addEventListener("DOMContentLoaded", destroyNetlifyIframe);
-window.addEventListener("load", destroyNetlifyIframe);
-setInterval(destroyNetlifyBadge, 500); // ব্যাকআপ
-setInterval(destroyNetlifyIframe, 500);
-
-// ডিকশনারি বক্স খোলা এবং বন্ধ করার ফাংশন
+// ৩. ডিকশনারি বক্স খোলা এবং বন্ধ করার ফাংশন
 function toggleDictionary() {
     const dictSection = document.getElementById('dictionary-section');
     if (dictSection.style.display === 'none') {
         dictSection.style.display = 'block';
-        document.getElementById('arabic-input').focus(); // বক্স খোলার সাথে সাথে কার্সর চলে যাবে
+        document.getElementById('arabic-input').focus();
     } else {
         dictSection.style.display = 'none';
     }
 }
 
-let typingTimer; // টাইপিং ট্র্যাক করার জন্য টাইমার
+let typingTimer;
 
-// টাইপ করার সাথে সাথে অটো কাজ করার ফাংশন
+// ৪. টাইপ করার সাথে সাথে অটো কাজ করার ফাংশন
 function autoSearchArabic() {
-    clearTimeout(typingTimer); // ইউজার টাইপ করতে থাকলে আগের রিকোয়েস্ট বাতিল করবে
+    clearTimeout(typingTimer);
     const word = document.getElementById('arabic-input').value.trim();
     const resultDiv = document.getElementById('dict-result');
 
     if (!word) {
-        resultDiv.innerHTML = ""; // বক্স খালি করলে আগের অর্থ মুছে যাবে
+        resultDiv.innerHTML = "";
         return;
     }
 
     resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>অর্থ খোঁজা হচ্ছে...</span>";
 
-    // টাইপ করা থামানোর ঠিক ৫০০ মিলিসেকেন্ড (আধা সেকেন্ড) পর অটোমেটিক অর্থ খুঁজবে
     typingTimer = setTimeout(() => {
         searchArabicWord();
     }, 500);
 }
 
-// নিজস্ব নিখুঁত শব্দের তালিকা (হরকত ছাড়া ও হরকতসহ)
+// ৫. নিজস্ব নিখুঁত শব্দের তালিকা
 const customDictionary = {
     "كتب": "বইসমূহ / অনেক বই (كتاب এর বহুবচন)",
     "كُتُبٌ": "বইসমূহ / অনেক বই (كتاب এর বহুবচন)",
@@ -98,6 +86,7 @@ const customDictionary = {
     "أَبْوَابٌ": "দরজাসমূহ (باب এর বহুবচন)"
 };
 
+// ৬. আরবী থেকে বাংলা অর্থ বের করার মূল ফাংশন
 async function searchArabicWord() {
     const rawWord = document.getElementById('arabic-input').value.trim();
     const resultDiv = document.getElementById('dict-result');
@@ -139,7 +128,3 @@ async function searchArabicWord() {
         resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>অর্থ খুঁজে পাওয়া যায়নি।</span>";
     }
 }
-
-
-
-
