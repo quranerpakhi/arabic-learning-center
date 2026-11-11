@@ -53,10 +53,16 @@ nav a:hover {
 
 .main-options {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 20px;
-    max-width: 1000px;
+    max-width: 1100px;
     margin: 40px auto 0;
+}
+
+@media (max-width: 768px) {
+    .main-options {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 .opt-btn {
@@ -134,6 +140,61 @@ iframe[style*="z-index: 2147483645"] {
     width: 0 !important;
     height: 0 !important;
     pointer-events: none !important;
+}
+.opt-btn.dict { border-left: 5px solid #ff9800; }
+
+/* ডিকশনারি ডিজাইন */
+.dictionary-container {
+    padding: 30px 5%;
+    text-align: center;
+}
+
+.dict-box {
+    background: white;
+    max-width: 650px;
+    margin: 0 auto;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+    border: 1px solid #eee;
+}
+
+.search-bar {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.search-bar input {
+    flex: 1;
+    padding: 12px 15px;
+    font-size: 18px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    outline: none;
+}
+
+.search-bar input:focus {
+    border-color: var(--primary-color);
+}
+
+.search-bar button {
+    padding: 12px 25px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.dict-result {
+    margin-top: 20px;
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--primary-color);
+    min-height: 30px;
 }
 
 
