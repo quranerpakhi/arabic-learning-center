@@ -64,8 +64,11 @@ function autoSearchArabic() {
     const word = inputField.value.trim();
     const resultDiv = document.getElementById('dict-result');
 
-    if (clearBtn) {
-        clearBtn.style.display = inputField.value.length > 0 ? "block" : "none";
+    // বক্সে লেখা থাকলে (X) বাটন দেখাবে, নাহলে লুকিয়ে রাখবে
+    if (inputField.value.length > 0) {
+        clearBtn.style.display = "block";
+    } else {
+        clearBtn.style.display = "none";
     }
 
     if (!word) {
@@ -79,6 +82,19 @@ function autoSearchArabic() {
         searchArabicWord();
     }, 500);
 }
+
+// ক্লিয়ার (X) বাটনে ক্লিক করলে বক্স ও ফলাফল মুছে ফেলার ফাংশন
+function clearArabicInput() {
+    const inputField = document.getElementById('arabic-input');
+    const clearBtn = document.getElementById('clear-btn');
+    const resultDiv = document.getElementById('dict-result');
+
+    inputField.value = "";
+    resultDiv.innerHTML = "";
+    clearBtn.style.display = "none";
+    inputField.focus(); // মুছে ফেলার পর আবার টাইপ করার জন্য কার্সর বক্সে নিয়ে আসবে
+}
+
 
 // ৫. ক্লিয়ার (X) বাটনে ক্লিক করলে বক্স ও ফলাফল মুছে ফেলার ফাংশন
 function clearArabicInput() {
