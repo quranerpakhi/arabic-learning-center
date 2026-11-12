@@ -88,9 +88,10 @@ async function searchArabicWord() {
     if (!rawWord) return;
 
     if (customDictionary.hasOwnProperty(rawWord)) {
-        resultDiv.innerHTML = `বাংলা অর্থ: <span style="color:#d35400;">${customDictionary.rawWord}</span>`;
+        resultDiv.innerHTML = `বাংলা অর্থ: <span style="color:#d35400;">${customDictionary[rawWord]}</span>`;
         return;
     }
+
 
     resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>সঠিক ব্যাকরণগত অর্থ খোঁজা হচ্ছে...</span>";
 
