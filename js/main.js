@@ -143,6 +143,7 @@ async function searchArabicWord() {
     
     if (!rawWord) return;
 
+    // ১ম ধাপ: নিজস্ব তালিকায় শব্দটি খুঁজবে
     if (customDictionary.hasOwnProperty(rawWord)) {
         const item = customDictionary[rawWord];
         resultDiv.innerHTML = `
@@ -159,10 +160,12 @@ async function searchArabicWord() {
 
     resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>সঠিক অর্থ খোঁজা হচ্ছে...</span>";
 
+    // কুরআনিক বিশেষ চিহ্নকে সাধারণ সাকিনে রূপান্তর
     const normalizedWord = rawWord
         .replace(/\u06E1/g, "\u0652")
         .replace(/[\u06D6-\u06E0\u06E2-\u06ED]/g, "");
 
+    // সব হরকত, তাশদীদ ও আলিফ-হামযা পরিষ্কার করে মূল অক্ষর বের করা
     const stripAll = (str) => str
         .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, "")
         .replace(/[أإآٱ]/g, "ا")
@@ -173,10 +176,12 @@ async function searchArabicWord() {
     let wordBn = "";
     let wordEn = "";
 
-    // কুরআনের ডাটাবেস থেকে শব্দটির প্রসঙ্গ ও অর্থ বের করা
+    // ২য় ধাপ: কুরআনের আয়াত খুঁজে সরাসরি ওপেন-সোর্স Word-by-Word JSON থেকে একক শব্দার্থ বের করা
     try {
         const alQuranBase = ["https:/", "api.alquran.cloud", "v1"].join("/");
-        let searchUrl = `${alQuranBase}/search/${encodeURIComponent(rawWord)}/all/quran-uthmani`;
+        
+        // প্রথমে হরকতসহ এবং না পেলে মূল অক্ষর দিয়ে আয়াত খোঁজা
+        let searchUrl = `${alQuranBase}/search/${encodeURIComponent(normalizedWord)}/all/quran-simple`;
         let searchRes = await fetch(searchUrl);
         let searchData = await searchRes.json();
 
@@ -191,63 +196,58 @@ async function searchArabicWord() {
         }
 
         if (searchData && searchData.data && Array.isArray(searchData.data.matches) && searchData.data.matches.length > 0) {
-            const match = searchData.data.matches.at(0);
-            const surahNum = match.surah.number;
-            const ayahNum = match.numberInSurah;
+            // প্রথম ৩টি ম্যাচিং আয়াতের ভেতর থেকে সঠিক শব্দটি খোঁজা
+            const matches = searchData.data.matches.slice(0, 3);
+            
+            for (const match of matches) {
+                const surahNum = match.surah.number;
+                const ayahNum = match.numberInSurah;
 
-            const arAyahRes = await fetch(`${alQuranBase}/ayah/${surahNum}:${ayahNum}/quran-uthmani`);
-            const arAyahData = await arAyahRes.json();
-
-            if (arAyahData && arAyahData.data && arAyahData.data.text) {
-                const fullAyahAr = arAyahData.data.text;
-                const baseGoogle = ["https:/", "translate." + "googleapis.com", "translate_a", "single"].join("/");
+                // ওপেন-সোর্স QuranWBW ডেটাবেস (CORS-মুক্ত jsDelivr CDN)
+                const wbwCdn = ["https:/", "cdn.jsdelivr.net", "gh", "marwan-alshaker", "quran-wbw@master", "data", "surahs"].join("/");
+                const wbwRes = await fetch(`${wbwCdn}/${surahNum}.json`);
                 
-                const wordsInAyah = fullAyahAr.split(" ");
-                let targetWord = rawWord;
-                for (const w of wordsInAyah) {
-                    if (w === rawWord || stripAll(w) === cleanRoot) {
-                        targetWord = w;
-                        break;
+                if (wbwRes.ok) {
+                    const surahData = await wbwRes.json();
+                    const ayahWords = surahData[ayahNum] || (surahData.verses && surahData.verses[ayahNum]);
+                    
+                    if (Array.isArray(ayahWords)) {
+                        for (const w of ayahWords) {
+                            const arText = w.arabic || w.text || w.word || "";
+                            if (stripAll(arText) === cleanRoot) {
+                                wordEn = w.english || w.en || w.translation || "";
+                                wordBn = w.bengali || w.bn || "";
+                                break;
+                            }
+                        }
                     }
                 }
-
-                const contextualAyah = fullAyahAr.replace(targetWord, `【${targetWord}】`);
-                const enCtxUrl = `${baseGoogle}?client=gtx&sl=ar&tl=en&dt=t&q=${encodeURIComponent(contextualAyah)}`;
-                const bnCtxUrl = `${baseGoogle}?client=gtx&sl=ar&tl=bn&dt=t&q=${encodeURIComponent(contextualAyah)}`;
-
-                const [ctxEnRes, ctxBnRes] = await Promise.all([
-                    fetch(enCtxUrl),
-                    fetch(bnCtxUrl)
-                ]);
-
-                const ctxEnData = await ctxEnRes.json();
-                const ctxBnData = await ctxBnRes.json();
-
-                let fullEn = "";
-                if (Array.isArray(ctxEnData) && Array.isArray(ctxEnData.at(0))) {
-                    ctxEnData.at(0).forEach(i => { 
-                        if (Array.isArray(i) && i.at(0)) fullEn += i.at(0); 
-                    });
-                }
-
-                let fullBn = "";
-                if (Array.isArray(ctxBnData) && Array.isArray(ctxBnData.at(0))) {
-                    ctxBnData.at(0).forEach(i => { 
-                        if (Array.isArray(i) && i.at(0)) fullBn += i.at(0); 
-                    });
-                }
-
-                const enMatch = fullEn.match(/【(.*?)】/);
-                const bnMatch = fullBn.match(/【(.*?)】/);
-
-                if (bnMatch && bnMatch.at(1)) wordBn = bnMatch.at(1).trim();
-                if (enMatch && enMatch.at(1)) wordEn = enMatch.at(1).trim();
+                if (wordEn || wordBn) break;
             }
         }
     } catch (qErr) {
-        console.log("Contextual Quran translation finished.");
+        console.log("Quran WBW lookup finished.");
     }
 
+    // যদি কুরআনের ইংরেজি শব্দার্থ পাওয়া যায় কিন্তু বাংলা না থাকে, তবে ওই নিখুঁত ইংরেজি থেকে বাংলা করা
+    if (wordEn && !wordBn) {
+        try {
+            const baseGoogle = ["https:/", "translate." + "googleapis.com", "translate_a", "single"].join("/");
+            const bnUrl = `${baseGoogle}?client=gtx&sl=en&tl=bn&dt=t&q=${encodeURIComponent(wordEn)}`;
+            const bnRes = await fetch(bnUrl);
+            const bnData = await bnRes.json();
+
+            if (Array.isArray(bnData) && Array.isArray(bnData.at(0))) {
+                bnData.at(0).forEach(item => {
+                    if (Array.isArray(item) && typeof item.at(0) === "string") {
+                        wordBn += item.at(0);
+                    }
+                });
+            }
+        } catch (e) {}
+    }
+
+    // কুরআনের একক শব্দার্থ পাওয়া গেলে সেটি দেখাবে
     if (wordBn && wordBn !== rawWord) {
         let outputHTML = `বাংলা অর্থ: <span style="color:#d35400; font-size:22px;">${wordBn}</span>`;
         if (wordEn) {
@@ -257,7 +257,7 @@ async function searchArabicWord() {
         return;
     }
 
-    // কুরআনে না পাওয়া গেলে সাধারণ আরবী শব্দের অনুবাদ
+    // ৩য় ধাপ: কুরআনে না পাওয়া গেলে সাধারণ আরবী শব্দের নিখুঁত অনুবাদ
     try {
         const baseGoogle = ["https:/", "translate." + "googleapis.com", "translate_a", "single"].join("/");
         const isDefinitelyNoun = /[\u064B\u064C\u064D]/.test(normalizedWord) || normalizedWord.startsWith("ال");
@@ -291,7 +291,8 @@ async function searchArabicWord() {
             if (isVerb) {
                 queryWord = `هو ${normalizedWord}`;
             } else if (isDefinitelyNoun) {
-                queryWord = `هذه ${normalizedWord} كثيرة`;
+                // শুধুমাত্র বহুবচন বা বিশেষ্য বোঝাতে 'بعض' (কিছু) ব্যবহার করে বাড়তি শব্দ এড়ানো
+                queryWord = `بعض ${normalizedWord}`;
             }
         }
 
@@ -308,10 +309,9 @@ async function searchArabicWord() {
             });
         }
 
+        // শুরুতে আসা বাড়তি 'some' বা 'কিছু' শব্দটি পরিষ্কার করা
         if (isDefinitelyNoun && englishMeaning) {
-            englishMeaning = englishMeaning
-                .replace(/^(these|this|many)\s+/gi, "")
-                .replace(/\s+(many|are many)$/gi, "");
+            englishMeaning = englishMeaning.replace(/^some\s+/gi, "").trim();
         }
 
         let finalBangla = "";
