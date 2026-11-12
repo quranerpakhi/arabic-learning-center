@@ -87,84 +87,82 @@ async function searchArabicWord() {
     
     if (!rawWord) return;
 
+    // ১ম ধাপ: নিজস্ব তালিকায় শব্দটি খুঁজবে
     if (customDictionary.hasOwnProperty(rawWord)) {
         resultDiv.innerHTML = `বাংলা অর্থ: <span style="color:#d35400;">${customDictionary[rawWord]}</span>`;
         return;
     }
 
-
     resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>সঠিক ব্যাকরণগত অর্থ খোঁজা হচ্ছে...</span>";
 
     try {
         const baseGoogle = ["https:/", "translate." + "googleapis.com", "translate_a", "single"].join("/");
-        
-        // শব্দে তানভীন (ً ٌ ٍ) অথবা শুরুতে 'ال' থাকলে সেটি নিশ্চিতভাবে বিশেষ্য (Noun)
-        const isDefinitelyNoun = /[\u064B\u064C\u064D]/.test(rawWord) || rawWord.startsWith("ال");
 
-        // ধাপ ১: পদ প্রকরণ (Verb নাকি Noun) পরীক্ষা করা
-        const checkUrl = `${baseGoogle}?client=gtx&sl=ar&tl=en&dt=t&dt=bd&q=${encodeURIComponent(rawWord)}`;
-        const checkRes = await fetch(checkUrl);
-        const checkData = await checkRes.json();
+        // কুরআনিক বিশেষ সাকিন (ۡ) এবং অতিরিক্ত চিহ্নগুলোকে সাধারণ সাকিনে (ْ) রূপান্তর করা
+        let normalizedWord = rawWord
+            .replace(/\u06E1/g, "\u0652") // কুরআনিক জযমকে সাধারণ সাকিনে বদলানো
+            .replace(/[\u06D6-\u06E0\u06E2-\u06ED]/g, ""); // ওয়াকফ বা অতিরিক্ত তাজবীদ চিহ্ন পরিষ্কার করা
 
+        // তানভীন বা 'ال' থাকলে বিশেষ্য হিসেবে চিহ্নিত করা
+        const isDefinitelyNoun = /[\u064B\u064C\u064D]/.test(normalizedWord) || normalizedWord.startsWith("ال");
+
+        // ২য় ধাপ: প্রথমে আরবী থেকে ইংরেজি অর্থ বের করা (কুরআনিক ক্রিয়ার অর্থ ইংরেজিতে অনেক নিখুঁত আসে)
+        const enUrl = `${baseGoogle}?client=gtx&sl=ar&tl=en&dt=t&dt=bd&q=${encodeURIComponent(normalizedWord)}`;
+        const enRes = await fetch(enUrl);
+        const enData = await enRes.json();
+
+        let englishMeaning = "";
         let posTag = "";
-        let isVerb = false;
 
-        if (isDefinitelyNoun) {
-            isVerb = false;
-            posTag = "বিশেষ্য (Noun)";
-        } else if (Array.isArray(checkData) && Array.isArray(checkData.at(1))) {
-            const firstCategory = checkData.at(1).at(0);
-            if (Array.isArray(firstCategory)) {
-                const rawPos = firstCategory.at(0);
-                if (rawPos === "verb") {
-                    isVerb = true;
-                    posTag = "ক্রিয়া (Verb)";
-                } else if (rawPos === "noun") {
-                    posTag = "বিশেষ্য (Noun)";
-                } else if (typeof rawPos === "string") {
-                    posTag = rawPos;
-                }
-            }
-        }
-
-        // ধাপ ২: ক্রিয়া এবং বহুবচন বিশেষ্যের সঠিক অর্থ আনতে প্রসঙ্গ যুক্ত করা
-        let queryToTranslate = rawWord;
-        if (!rawWord.includes(" ")) {
-            if (isVerb) {
-                queryToTranslate = `هو ${rawWord}`;
-            } else if (isDefinitelyNoun) {
-                queryToTranslate = `هذه ${rawWord} كثيرة`; // বহুবচন বা বিশেষ্য বোঝাতে 'অনেক' ইঙ্গিত যোগ করা হলো
-            }
-        }
-
-        const bnUrl = `${baseGoogle}?client=gtx&sl=ar&tl=bn&dt=t&q=${encodeURIComponent(queryToTranslate)}`;
-        const bnRes = await fetch(bnUrl);
-        const bnData = await bnRes.json();
-
-        let finalBangla = "";
-        if (Array.isArray(bnData) && Array.isArray(bnData.at(0))) {
-            bnData.at(0).forEach(item => {
+        if (Array.isArray(enData) && Array.isArray(enData.at(0))) {
+            enData.at(0).forEach(item => {
                 if (Array.isArray(item) && typeof item.at(0) === "string") {
-                    finalBangla += item.at(0);
+                    englishMeaning += item.at(0);
                 }
             });
         }
 
-        // প্রসঙ্গ হিসেবে যুক্ত হওয়া অতিরিক্ত শব্দগুলো পরিষ্কার করে মূল অর্থ রাখা
-        if (isDefinitelyNoun && finalBangla) {
-            finalBangla = finalBangla.replace(/^(এই|এগুলো|এটি|এসব|অনেক|প্রচুর)\s+/g, "").replace(/\s+(অনেক|প্রচুর)$/g, "");
+        // পদ প্রকরণ শনাক্ত করা
+        if (isDefinitelyNoun) {
+            posTag = "বিশেষ্য (Noun)";
+        } else if (Array.isArray(enData) && Array.isArray(enData.at(1))) {
+            const firstCat = enData.at(1).at(0);
+            if (Array.isArray(firstCat)) {
+                const rawPos = firstCat.at(0);
+                posTag = rawPos === "verb" ? "ক্রিয়া (Verb)" : (rawPos === "noun" ? "বিশেষ্য (Noun)" : rawPos);
+            }
         }
 
+        // ৩য় ধাপ: ইংরেজি অর্থ পাওয়া গেলে সেটিকে বাংলায় রূপান্তর করা
+        let finalBangla = "";
+        if (englishMeaning && englishMeaning.toLowerCase() !== normalizedWord.toLowerCase()) {
+            const bnUrl = `${baseGoogle}?client=gtx&sl=en&tl=bn&dt=t&q=${encodeURIComponent(englishMeaning)}`;
+            const bnRes = await fetch(bnUrl);
+            const bnData = await bnRes.json();
+
+            if (Array.isArray(bnData) && Array.isArray(bnData.at(0))) {
+                bnData.at(0).forEach(item => {
+                    if (Array.isArray(item) && typeof item.at(0) === "string") {
+                        finalBangla += item.at(0);
+                    }
+                });
+            }
+        }
+
+        // ফলাফল স্ক্রিনে দেখানো (বাংলা এবং ইংরেজি উভয় অর্থসহ)
         if (finalBangla) {
             let outputHTML = `বাংলা অর্থ: <span style="color:#d35400; font-size:22px;">${finalBangla}</span>`;
+            
+            // ইংরেজি অর্থটি বাংলা অর্থের ঠিক নিচে দেখানো হচ্ছে
+            if (englishMeaning) {
+                outputHTML += `<div style="font-size:17px; color:#1e8449; margin-top:6px;">ইংরেজি অর্থ: <strong>${englishMeaning}</strong></div>`;
+            }
+
             if (posTag) {
-                outputHTML += `<div style="font-size:14px; color:#555; margin-top:6px;">পদ প্রকরণ: <strong>${posTag}</strong></div>`;
+                outputHTML += `<div style="font-size:14px; color:#555; margin-top:5px;">পদ প্রকরণ: <strong>${posTag}</strong></div>`;
             }
             resultDiv.innerHTML = outputHTML;
             return;
         }
-    } catch (e) {
-        resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>অর্থ খুঁজে পাওয়া যায়নি, আবার চেষ্টা করুন।</span>";
-    }
-}
+
 
