@@ -214,5 +214,9 @@ iframe[style*="z-index: 2147483645"] {
         padding: 20px;
     }
 }
+/* ক্লিয়ার (X) বাটনের হোভার ইফেক্ট */
+#clear-btn:hover {
+    color: #e74c3c !important;
+}
 
 
