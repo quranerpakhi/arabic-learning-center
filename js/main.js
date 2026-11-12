@@ -4,10 +4,10 @@ document.addEventListener("DOMContentLoaded", function() {
         .then(response => response.json())
         .then(data => {
             window.allData = data;
-            if(document.getElementById('whatsapp-btn')) {
+            if (document.getElementById('whatsapp-btn')) {
                 document.getElementById('whatsapp-btn').href = data.live_classes.whatsapp_link;
             }
-            if(document.getElementById('meet-btn')) {
+            if (document.getElementById('meet-btn')) {
                 document.getElementById('meet-btn').href = data.live_classes.google_meet_link;
             }
             filterNotes('regular');
@@ -24,7 +24,7 @@ function filterNotes(type) {
     container.innerHTML = "";
     
     let notes = [];
-    if(type === 'regular') {
+    if (type === 'regular') {
         title.innerText = "রেগুলার ক্লাস নোটসমূহ";
         notes = window.allData.regular_notes;
     } else {
@@ -46,7 +46,7 @@ function filterNotes(type) {
 // ৩. ডিকশনারি বক্স খোলা এবং বন্ধ করার ফাংশন
 function toggleDictionary() {
     const dictSection = document.getElementById('dictionary-section');
-    if (dictSection.style.display === 'none') {
+    if (dictSection.style.display === 'none' || dictSection.style.display === '') {
         dictSection.style.display = 'block';
         document.getElementById('arabic-input').focus();
     } else {
@@ -56,11 +56,17 @@ function toggleDictionary() {
 
 let typingTimer;
 
-// ৪. টাইপ করার সাথে সাথে অটো কাজ করার ফাংশন
+// ৪. টাইপ করার সাথে সাথে অটো কাজ করা এবং ক্লিয়ার বাটন দেখানোর ফাংশন
 function autoSearchArabic() {
     clearTimeout(typingTimer);
-    const word = document.getElementById('arabic-input').value.trim();
+    const inputField = document.getElementById('arabic-input');
+    const clearBtn = document.getElementById('clear-btn');
+    const word = inputField.value.trim();
     const resultDiv = document.getElementById('dict-result');
+
+    if (clearBtn) {
+        clearBtn.style.display = inputField.value.length > 0 ? "block" : "none";
+    }
 
     if (!word) {
         resultDiv.innerHTML = "";
@@ -74,20 +80,32 @@ function autoSearchArabic() {
     }, 500);
 }
 
-// ৫. নিজস্ব বিশেষ শব্দের ব্যাকআপ তালিকা (যেগুলো কুরআনে বা ক্লাসে বেশি ব্যবহৃত হয়)
+// ৫. ক্লিয়ার (X) বাটনে ক্লিক করলে বক্স ও ফলাফল মুছে ফেলার ফাংশন
+function clearArabicInput() {
+    const inputField = document.getElementById('arabic-input');
+    const clearBtn = document.getElementById('clear-btn');
+    const resultDiv = document.getElementById('dict-result');
+
+    inputField.value = "";
+    resultDiv.innerHTML = "";
+    if (clearBtn) clearBtn.style.display = "none";
+    inputField.focus();
+}
+
+// ৬. নিজস্ব নিখুঁত শব্দের তালিকা
 const customDictionary = {
     "تَلْقَفُ": "গিলে ফেলা / লুফে নেওয়া",
-    "تَلۡقَفُ": "গিলে ফেলা / লুফে নেওয়া"
+    "تَلۡقَفُ": "গিলে ফেলা / লুফে নেওয়া",
+    "تلقف": "গিলে ফেলা / লুফে নেওয়া"
 };
 
-// ৬. পৃথিবীর যেকোনো আরবী শব্দের নিখুঁত ও বিস্তারিত বাংলা অর্থ বের করার ফাংশন
+// ৭. আরবী থেকে বাংলা ও ইংরেজি অর্থ বের করার মূল ফাংশন
 async function searchArabicWord() {
     const rawWord = document.getElementById('arabic-input').value.trim();
     const resultDiv = document.getElementById('dict-result');
     
     if (!rawWord) return;
 
-    // ১ম ধাপ: নিজস্ব তালিকায় শব্দটি খুঁজবে
     if (customDictionary.hasOwnProperty(rawWord)) {
         resultDiv.innerHTML = `বাংলা অর্থ: <span style="color:#d35400;">${customDictionary[rawWord]}</span>`;
         return;
@@ -98,15 +116,12 @@ async function searchArabicWord() {
     try {
         const baseGoogle = ["https:/", "translate." + "googleapis.com", "translate_a", "single"].join("/");
 
-        // কুরআনিক বিশেষ সাকিন (ۡ) এবং অতিরিক্ত চিহ্নগুলোকে সাধারণ সাকিনে (ْ) রূপান্তর করা
         let normalizedWord = rawWord
-            .replace(/\u06E1/g, "\u0652") // কুরআনিক জযমকে সাধারণ সাকিনে বদলানো
-            .replace(/[\u06D6-\u06E0\u06E2-\u06ED]/g, ""); // ওয়াকফ বা অতিরিক্ত তাজবীদ চিহ্ন পরিষ্কার করা
+            .replace(/\u06E1/g, "\u0652")
+            .replace(/[\u06D6-\u06E0\u06E2-\u06ED]/g, "");
 
-        // তানভীন বা 'ال' থাকলে বিশেষ্য হিসেবে চিহ্নিত করা
         const isDefinitelyNoun = /[\u064B\u064C\u064D]/.test(normalizedWord) || normalizedWord.startsWith("ال");
 
-        // ২য় ধাপ: প্রথমে আরবী থেকে ইংরেজি অর্থ বের করা (কুরআনিক ক্রিয়ার অর্থ ইংরেজিতে অনেক নিখুঁত আসে)
         const enUrl = `${baseGoogle}?client=gtx&sl=ar&tl=en&dt=t&dt=bd&q=${encodeURIComponent(normalizedWord)}`;
         const enRes = await fetch(enUrl);
         const enData = await enRes.json();
@@ -122,7 +137,6 @@ async function searchArabicWord() {
             });
         }
 
-        // পদ প্রকরণ শনাক্ত করা
         if (isDefinitelyNoun) {
             posTag = "বিশেষ্য (Noun)";
         } else if (Array.isArray(enData) && Array.isArray(enData.at(1))) {
@@ -133,7 +147,6 @@ async function searchArabicWord() {
             }
         }
 
-        // ৩য় ধাপ: ইংরেজি অর্থ পাওয়া গেলে সেটিকে বাংলায় রূপান্তর করা
         let finalBangla = "";
         if (englishMeaning && englishMeaning.toLowerCase() !== normalizedWord.toLowerCase()) {
             const bnUrl = `${baseGoogle}?client=gtx&sl=en&tl=bn&dt=t&q=${encodeURIComponent(englishMeaning)}`;
@@ -149,20 +162,18 @@ async function searchArabicWord() {
             }
         }
 
-        // ফলাফল স্ক্রিনে দেখানো (বাংলা এবং ইংরেজি উভয় অর্থসহ)
         if (finalBangla) {
             let outputHTML = `বাংলা অর্থ: <span style="color:#d35400; font-size:22px;">${finalBangla}</span>`;
-            
-            // ইংরেজি অর্থটি বাংলা অর্থের ঠিক নিচে দেখানো হচ্ছে
             if (englishMeaning) {
                 outputHTML += `<div style="font-size:17px; color:#1e8449; margin-top:6px;">ইংরেজি অর্থ: <strong>${englishMeaning}</strong></div>`;
             }
-
             if (posTag) {
                 outputHTML += `<div style="font-size:14px; color:#555; margin-top:5px;">পদ প্রকরণ: <strong>${posTag}</strong></div>`;
             }
             resultDiv.innerHTML = outputHTML;
             return;
         }
-
-
+    } catch (e) {
+        resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>অর্থ খুঁজে পাওয়া যায়নি, আবার চেষ্টা করুন।</span>";
+    }
+}
