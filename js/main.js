@@ -160,17 +160,18 @@ async function searchArabicWord() {
     const normalizedWord = rawWord
         .replace(/\u06E1/g, "\u0652")
         .replace(/[\u06D6-\u06E0\u06E2-\u06ED]/g, "");
+    
+    // সব হরকত, তাশদীদ এবং আলিফ-খঞ্জর বাদ দিয়ে শুধু মূল অক্ষর বের করা (কুরআন সার্চের জন্য)
     const cleanRoot = normalizedWord.replace(/[\u064B-\u065F\u0670]/g, "");
 
     let quranVerseContext = "";
     let quranExactBn = "";
     let quranExactEn = "";
 
-    // ২য় ধাপ: অফিশিয়াল Quran.com ডাটাবেস থেকে কুরআনের শব্দের নিখুঁত বাংলা ও ইংরেজি অর্থ খোঁজা
+    // ২য় ধাপ: হরকত ছাড়া মূল অক্ষর (cleanRoot) দিয়ে কুরআন ডাটাবেসে সঠিক আয়াতটি খোঁজা
     try {
         const quranApiBase = ["https:/", "://quran.com", "api", "v4"].join("/");
-        // হরকতসহ শব্দ দিয়ে কুরআনের সঠিক আয়াতটি খুঁজে বের করা
-        const searchRes = await fetch(`${quranApiBase}/search?q=${encodeURIComponent(normalizedWord)}&size=1&language=bn`);
+        const searchRes = await fetch(`${quranApiBase}/search?q=${encodeURIComponent(cleanRoot)}&size=3&language=bn`);
         const searchData = await searchRes.json();
 
         if (searchData && searchData.search && Array.isArray(searchData.search.results) && searchData.search.results.length > 0) {
@@ -178,20 +179,23 @@ async function searchArabicWord() {
             if (verseKey) {
                 quranVerseContext = `কুরআনের রেফারেন্স: <strong>সূরা ও আয়াত (${verseKey})</strong>`;
                 
-                // ওই আয়াত থেকে বাংলা শব্দার্থ নেওয়া
-                const verseBnRes = await fetch(`${quranApiBase}/verses/by_key/${verseKey}?language=bn&words=true&word_fields=text_uthmani,text_imlaei_simple`);
-                const verseBnData = await verseBnRes.json();
+                // ওই আয়াত থেকে বাংলা ও ইংরেজি শব্দার্থ একসাথে আনা
+                const [verseBnRes, verseEnRes] = await Promise.all([
+                    fetch(`${quranApiBase}/verses/by_key/${verseKey}?language=bn&words=true&word_fields=text_uthmani,text_imlaei_simple`),
+                    fetch(`${quranApiBase}/verses/by_key/${verseKey}?language=en&words=true&word_fields=text_uthmani,text_imlaei_simple`)
+                ]);
                 
-                // ওই আয়াত থেকে ইংরেজি শব্দার্থ নেওয়া
-                const verseEnRes = await fetch(`${quranApiBase}/verses/by_key/${verseKey}?language=en&words=true&word_fields=text_uthmani,text_imlaei_simple`);
+                const verseBnData = await verseBnRes.json();
                 const verseEnData = await verseEnRes.json();
 
                 if (verseBnData && verseBnData.verse && Array.isArray(verseBnData.verse.words)) {
                     for (let i = 0; i < verseBnData.verse.words.length; i++) {
                         const w = verseBnData.verse.words.at(i);
-                        const wClean = (w.text_imlaei_simple || w.text_uthmani || "").replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, "");
+                        const wUthmani = (w.text_uthmani || "").replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, "");
+                        const wSimple = (w.text_imlaei_simple || "").replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, "");
                         
-                        if (wClean === cleanRoot || wClean.includes(cleanRoot) || cleanRoot.includes(wClean)) {
+                        // মূল অক্ষরের সাথে মিলিয়ে সঠিক শব্দটি বের করা
+                        if (wUthmani === cleanRoot || wSimple === cleanRoot || wUthmani.includes(cleanRoot) || wSimple.includes(cleanRoot)) {
                             if (w.translation && w.translation.text) {
                                 quranExactBn = w.translation.text;
                             }
@@ -211,7 +215,7 @@ async function searchArabicWord() {
         console.log("Quran API check finished.");
     }
 
-    // যদি কুরআনের অফিশিয়াল বাংলা অর্থ সরাসরি পাওয়া যায়, তবে সাথে সাথে সেটি দেখিয়ে দেবে
+    // কুরআনের অফিশিয়াল বাংলা অর্থ পাওয়া গেলে সরাসরি সেটি দেখানো
     if (quranExactBn) {
         let outputHTML = `বাংলা অর্থ: <span style="color:#d35400; font-size:22px;">${quranExactBn}</span>`;
         if (quranExactEn) {
@@ -228,7 +232,6 @@ async function searchArabicWord() {
     try {
         const baseGoogle = ["https:/", "translate." + "googleapis.com", "translate_a", "single"].join("/");
         
-        // পদ প্রকরণ পরীক্ষা করা
         const checkUrl = `${baseGoogle}?client=gtx&sl=ar&tl=en&dt=t&dt=bd&q=${encodeURIComponent(normalizedWord)}`;
         const checkRes = await fetch(checkUrl);
         const checkData = await checkRes.json();
@@ -251,7 +254,6 @@ async function searchArabicWord() {
             }
         }
 
-        // ক্রিয়াপদ হলে সঠিক রূপের জন্য 'هو' প্রসঙ্গ যুক্ত করা (যাতে كَتَبَ লিখলে 'বই' না এসে 'সে লিখল' আসে)
         let queryWord = normalizedWord;
         if (isVerb && !normalizedWord.includes(" ")) {
             queryWord = `هو ${normalizedWord}`;
