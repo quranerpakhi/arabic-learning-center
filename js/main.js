@@ -68,6 +68,22 @@ function toggleQuran() {
         quranSection.style.display = 'none';
     }
 }
+// দোআ ও যিকির বক্স খোলা এবং বন্ধ করার ফাংশন
+function toggleDua() {
+    const duaSection = document.getElementById('dua-section');
+    const quranSection = document.getElementById('quran-section');
+    const dictSection = document.getElementById('dictionary-section');
+    
+    // অন্য বক্স খোলা থাকলে তা বন্ধ করে দেবে যাতে পেজ পরিষ্কার থাকে
+    if (quranSection) quranSection.style.display = 'none';
+    if (dictSection) dictSection.style.display = 'none';
+
+    if (duaSection.style.display === 'none' || duaSection.style.display === '') {
+        duaSection.style.display = 'block';
+    } else {
+        duaSection.style.display = 'none';
+    }
+}
 
 let typingTimer;
 
