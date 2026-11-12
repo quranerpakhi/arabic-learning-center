@@ -54,6 +54,21 @@ function toggleDictionary() {
     }
 }
 
+// কুরআন বক্স খোলা এবং বন্ধ করার ফাংশন
+function toggleQuran() {
+    const quranSection = document.getElementById('quran-section');
+    const dictSection = document.getElementById('dictionary-section');
+    
+    // কুরআন খুললে ডিকশনারি বন্ধ হয়ে যাবে যাতে পেজ পরিষ্কার থাকে
+    if (dictSection) dictSection.style.display = 'none';
+
+    if (quranSection.style.display === 'none' || quranSection.style.display === '') {
+        quranSection.style.display = 'block';
+    } else {
+        quranSection.style.display = 'none';
+    }
+}
+
 let typingTimer;
 
 // ৪. টাইপ করার সাথে সাথে অটো কাজ করা এবং ক্লিয়ার বাটন দেখানোর ফাংশন
