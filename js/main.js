@@ -156,13 +156,13 @@ async function searchArabicWord() {
 
     resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>কুরআনিক ও সাধারণ অভিধানে অর্থ খোঁজা হচ্ছে...</span>";
 
-    // আরবী অক্ষর ও হরকতকে স্ট্যান্ডার্ড রূপে আনার ফাংশন (যাতে কুরআনের যেকোনো ফন্টের বানান মিলে যায়)
+    // আরবী অক্ষর ও হরকত পরিষ্কার করার ফাংশন
     function normalizeArabic(text) {
         return text
-            .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, "") // সব হরকত, তাশদীদ ও ওয়াকফ চিহ্ন মোছা
-            .replace(/[أإآٱ]/g, "ا") // সব ধরনের আলিফ ও হামযাকে সাধারণ আলিফে রূপান্তর
-            .replace(/ى/g, "ي")      // আলিফ মাকসুরাকে সাধারণ ইয়া-তে রূপান্তর
-            .replace(/ة/g, "ه");     // গোল তা-কে সাধারণ হা-তে রূপান্তর
+            .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, "")
+            .replace(/[أإآٱ]/g, "ا")
+            .replace(/ى/g, "ي")
+            .replace(/ة/g, "ه");
     }
 
     const cleanRoot = normalizeArabic(rawWord);
@@ -171,70 +171,69 @@ async function searchArabicWord() {
         .replace(/[\u06D6-\u06E0\u06E2-\u06ED]/g, "");
 
     let quranVerseContext = "";
-    let quranExactBn = "";
-    let quranExactEn = "";
+    let quranAyahBn = "";
+    let quranAyahEn = "";
 
-    // ২য় ধাপ: অফিশিয়াল Quran.com V4 API থেকে সরাসরি আয়াত ও শব্দার্থ বের করা
+    // ২য় ধাপ: ১০০% CORS-মুক্ত AlQuran Cloud API দিয়ে কুরআনে শব্দটি খোঁজা
     try {
-        const quranApiBase = ["https:/", "://quran.com", "api", "v4"].join("/");
-        // মূল অক্ষর দিয়ে কুরআনে সার্চ করা
-        const searchRes = await fetch(`${quranApiBase}/search?q=${encodeURIComponent(cleanRoot)}&size=5&language=bn`);
+        const alQuranBase = ["https:/", "api.alquran.cloud", "v1"].join("/");
+        // কুরআনের পরিষ্কার টেক্সট থেকে শব্দটি সার্চ করা
+        const searchRes = await fetch(`${alQuranBase}/search/${encodeURIComponent(cleanRoot)}/all/quran-simple-clean`);
         const searchData = await searchRes.json();
 
-        if (searchData && searchData.search && Array.isArray(searchData.search.results) && searchData.search.results.length > 0) {
-            const firstResult = searchData.search.results.at(0);
-            const verseKey = firstResult.verse_key;
+        if (searchData && searchData.data && Array.isArray(searchData.data.matches) && searchData.data.matches.length > 0) {
+            const match = searchData.data.matches.at(0);
+            const surahNum = match.surah.number;
+            const ayahNum = match.numberInSurah;
+            quranVerseContext = `কুরআনের রেফারেন্স: <strong>${match.surah.englishName} (${surahNum}:${ayahNum})</strong>`;
 
-            if (verseKey) {
-                quranVerseContext = `কুরআনের রেফারেন্স: <strong>সূরা ও আয়াত (${verseKey})</strong>`;
-                
-                // ওই আয়াতটির শব্দে শব্দে বাংলা ও ইংরেজি অর্থ একসাথে আনা
-                const [bnRes, enRes] = await Promise.all([
-                    fetch(`${quranApiBase}/verses/by_key/${verseKey}?language=bn&words=true&word_fields=text_uthmani,text_imlaei_simple`),
-                    fetch(`${quranApiBase}/verses/by_key/${verseKey}?language=en&words=true&word_fields=text_uthmani,text_imlaei_simple`)
-                ]);
+            // ওই নির্দিষ্ট আয়াতটির অফিশিয়াল বাংলা (bn.bengali) এবং ইংরেজি (en.sahih) অনুবাদ একসাথে আনা
+            const ayahRes = await fetch(`${alQuranBase}/ayah/${surahNum}:${ayahNum}/editions/bn.bengali,en.sahih`);
+            const ayahData = await ayahRes.json();
 
-                const bnData = await bnRes.json();
-                const enData = await enRes.json();
-
-                if (bnData && bnData.verse && Array.isArray(bnData.verse.words)) {
-                    for (let i = 0; i < bnData.verse.words.length; i++) {
-                        const w = bnData.verse.words.at(i);
-                        if (w.char_type_name !== "word") continue;
-
-                        const wNorm1 = normalizeArabic(w.text_uthmani || "");
-                        const wNorm2 = normalizeArabic(w.text_imlaei_simple || "");
-                        
-                        // নর্মালাইজড মূল অক্ষরের সাথে ১০০% মিলিয়ে দেখা
-                        if (wNorm1 === cleanRoot || wNorm2 === cleanRoot || wNorm1.includes(cleanRoot) || wNorm2.includes(cleanRoot)) {
-                            if (w.translation && w.translation.text) {
-                                quranExactBn = w.translation.text;
-                            }
-                            if (enData && enData.verse && Array.isArray(enData.verse.words)) {
-                                const wEn = enData.verse.words.at(i);
-                                if (wEn && wEn.translation && wEn.translation.text) {
-                                    quranExactEn = wEn.translation.text;
-                                }
-                            }
-                            break;
-                        }
-                    }
-                }
+            if (ayahData && Array.isArray(ayahData.data) && ayahData.data.length >= 2) {
+                quranAyahBn = ayahData.data.at(0).text;
+                quranAyahEn = ayahData.data.at(1).text;
             }
         }
     } catch (qErr) {
-        console.log("Quran API error:", qErr);
+        console.log("AlQuran Cloud check finished.");
     }
 
-    // কুরআনের অফিশিয়াল বাংলা অর্থ পাওয়া গেলে সাথে সাথে দেখিয়ে দেবে
-    if (quranExactBn) {
-        let outputHTML = `বাংলা অর্থ: <span style="color:#d35400; font-size:22px;">${quranExactBn}</span>`;
-        if (quranExactEn) {
-            outputHTML += `<div style="font-size:17px; color:#1e8449; margin-top:6px;">ইংরেজি অর্থ: <strong>${quranExactEn}</strong></div>`;
-        }
-        if (quranVerseContext) {
-            outputHTML += `<div style="font-size:13px; color:#008080; margin-top:6px; background:#e8f8f5; padding:4px 10px; border-radius:4px; display:inline-block;">📖 ${quranVerseContext}</div>`;
-        }
+    // কুরআনে শব্দটি পাওয়া গেলে সরাসরি কুরআনের অফিশিয়াল বাংলা ও ইংরেজি অর্থ দেখানো
+    if (quranAyahBn) {
+        // সম্পূর্ণ আয়াতের অনুবাদের পাশাপাশি নির্দিষ্ট শব্দটির অর্থ আলাদা করে বের করার জন্য গুগলকে কুরআনের আয়াতের প্রসঙ্গ দেওয়া
+        let wordBn = "";
+        let wordEn = "";
+        try {
+            const baseGoogle = ["https:/", "translate." + "googleapis.com", "translate_a", "single"].join("/");
+            // কুরআনের শব্দটির একক অনুবাদ নেওয়া
+            const [gBnRes, gEnRes] = await Promise.all([
+                fetch(`${baseGoogle}?client=gtx&sl=ar&tl=bn&dt=t&q=${encodeURIComponent(normalizedWord)}`),
+                fetch(`${baseGoogle}?client=gtx&sl=ar&tl=en&dt=t&q=${encodeURIComponent(normalizedWord)}`)
+            ]);
+            const gBnData = await gBnRes.json();
+            const gEnData = await gEnRes.json();
+            
+            if (Array.isArray(gBnData) && Array.isArray(gBnData.at(0))) {
+                wordBn = gBnData.at(0).map(i => i.at(0)).join("");
+            }
+            if (Array.isArray(gEnData) && Array.isArray(gEnData.at(0))) {
+                wordEn = gEnData.at(0).map(i => i.at(0)).join("");
+            }
+        } catch (e) {}
+
+        let outputHTML = `
+            <div style="background:#f9fbf9; border:1px solid #d5e8d4; border-radius:10px; padding:15px; margin-top:10px; text-align:right;" dir="rtl">
+                <div style="font-size:13px; color:#008080; text-align:left; margin-bottom:8px;" dir="ltr">📖 ${quranVerseContext}</div>
+                <div style="font-size:16px; color:#2c3e50; text-align:left; line-height:1.6;" dir="ltr">
+                    <strong>আয়াতের বাংলা অনুবাদ:</strong> ${quranAyahBn}
+                </div>
+                <div style="font-size:15px; color:#1e8449; text-align:left; margin-top:6px; line-height:1.5;" dir="ltr">
+                    <strong>ইংরেজি অনুবাদ:</strong> ${quranAyahEn}
+                </div>
+            </div>
+        `;
         resultDiv.innerHTML = outputHTML;
         return;
     }
