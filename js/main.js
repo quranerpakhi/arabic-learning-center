@@ -341,3 +341,14 @@ async function searchArabicWord() {
         resultDiv.innerHTML = "<span style='color:red; font-size:16px;'>অর্থ খুঁজে পাওয়া যায়নি, আবার চেষ্টা করুন।</span>";
     }
 }
+
+// Contact সেকশন খোলা এবং বন্ধ করার ফাংশন
+function toggleContact() {
+    const contactSection = document.getElementById('contact-section');
+    if (contactSection.style.display === 'none' || contactSection.style.display === '') {
+        contactSection.style.display = 'block';
+        contactSection.scrollIntoView({ behavior: 'smooth' });
+    } else {
+        contactSection.style.display = 'none';
+    }
+}
