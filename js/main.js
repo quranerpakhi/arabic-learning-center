@@ -92,36 +92,48 @@ function clearArabicInput() {
     inputField.focus();
 }
 
-// ৬. নিজস্ব নিখুঁত শব্দের তালিকা
+// ৬. নিজস্ব বিশেষ শব্দের তালিকা (বাংলা ও ইংরেজি উভয় অর্থসহ)
 const customDictionary = {
-    "تَلْقَفُ": "গিলে ফেলা / লুফে নেওয়া",
-    "تَلۡقَفُ": "গিলে ফেলা / লুফে নেওয়া",
-    "تلقف": "গিলে ফেলা / লুফে নেওয়া"
+    "تَلْقَفُ": { bn: "গিলে ফেলা / লুফে নেওয়া", en: "swallows / devours", pos: "ক্রিয়া (Verb)" },
+    "تَلۡقَفُ": { bn: "গিলে ফেলা / লুফে নেওয়া", en: "swallows / devours", pos: "ক্রিয়া (Verb)" },
+    "تلقف": { bn: "গিলে ফেলা / লুফে নেওয়া", en: "swallows / devours", pos: "ক্রিয়া (Verb)" },
+    "عَصَاكَ": { bn: "তোমার লাঠি", en: "your staff / stick", pos: "বিশেষ্য (Noun)" },
+    "عصاك": { bn: "তোমার লাঠি", en: "your staff / stick", pos: "বিশেষ্য (Noun)" },
+    "يَأْفِكُونَ": { bn: "তারা মিথ্যা রচনা করে / ভেল্কিবাজি করে", en: "they falsify / invent", pos: "ক্রিয়া (Verb)" },
+    "يَأۡفِكُونَ": { bn: "তারা মিথ্যা রচনা করে / ভেল্কিবাজি করে", en: "they falsify / invent", pos: "ক্রিয়া (Verb)" },
+    "مَا يَأْفِكُونَ": { bn: "তারা যা মিথ্যা রচনা করছে", en: "what they falsify", pos: "বাক্যাংশ (Phrase)" },
+    "مَا يَأۡفِكُونَ": { bn: "তারা যা মিথ্যা রচনা করছে", en: "what they falsify", pos: "বাক্যাংশ (Phrase)" }
 };
 
-// ৭. আরবী থেকে বাংলা ও ইংরেজি অর্থ বের করার মূল ফাংশন
+// ৭. আরবী থেকে নির্ভুল বাংলা ও ইংরেজি অর্থ বের করার মূল ফাংশন
 async function searchArabicWord() {
     const rawWord = document.getElementById('arabic-input').value.trim();
     const resultDiv = document.getElementById('dict-result');
     
     if (!rawWord) return;
 
+    // ১ম ধাপ: নিজস্ব তালিকায় শব্দটি থাকলে বাংলা, ইংরেজি ও পদ প্রকরণ সব দেখাবে
     if (customDictionary.hasOwnProperty(rawWord)) {
-        resultDiv.innerHTML = `বাংলা অর্থ: <span style="color:#d35400;">${customDictionary[rawWord]}</span>`;
+        const item = customDictionary[rawWord];
+        resultDiv.innerHTML = `
+            বাংলা অর্থ: <span style="color:#d35400; font-size:22px;">${item.bn}</span>
+            <div style="font-size:17px; color:#1e8449; margin-top:6px;">ইংরেজি অর্থ: <strong>${item.en}</strong></div>
+            <div style="font-size:14px; color:#555; margin-top:5px;">পদ প্রকরণ: <strong>${item.pos}</strong></div>
+        `;
         return;
     }
 
-    resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>সঠিক ব্যাকরণগত অর্থ খোঁজা হচ্ছে...</span>";
+    resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>সঠিক অর্থ খোঁজা হচ্ছে...</span>";
 
     try {
         const baseGoogle = ["https:/", "translate." + "googleapis.com", "translate_a", "single"].join("/");
 
+        // কুরআনিক বিশেষ সাকিন (ۡ) এবং অতিরিক্ত চিহ্নগুলোকে সাধারণ সাকিনে (ْ) রূপান্তর করা
         let normalizedWord = rawWord
             .replace(/\u06E1/g, "\u0652")
             .replace(/[\u06D6-\u06E0\u06E2-\u06ED]/g, "");
 
-        const isDefinitelyNoun = /[\u064B\u064C\u064D]/.test(normalizedWord) || normalizedWord.startsWith("ال");
-
+        // ২য় ধাপ: গুগল থেকে ইংরেজি অর্থ এবং আসল পদ প্রকরণ (Verb নাকি Noun) বের করা
         const enUrl = `${baseGoogle}?client=gtx&sl=ar&tl=en&dt=t&dt=bd&q=${encodeURIComponent(normalizedWord)}`;
         const enRes = await fetch(enUrl);
         const enData = await enRes.json();
@@ -137,16 +149,19 @@ async function searchArabicWord() {
             });
         }
 
-        if (isDefinitelyNoun) {
-            posTag = "বিশেষ্য (Noun)";
-        } else if (Array.isArray(enData) && Array.isArray(enData.at(1))) {
+        // পদ প্রকরণ নিখুঁতভাবে শনাক্ত করা (গুগলের আসল বিশ্লেষণ থেকে)
+        if (Array.isArray(enData) && Array.isArray(enData.at(1))) {
             const firstCat = enData.at(1).at(0);
             if (Array.isArray(firstCat)) {
                 const rawPos = firstCat.at(0);
-                posTag = rawPos === "verb" ? "ক্রিয়া (Verb)" : (rawPos === "noun" ? "বিশেষ্য (Noun)" : rawPos);
+                if (rawPos === "verb") posTag = "ক্রিয়া (Verb)";
+                else if (rawPos === "noun") posTag = "বিশেষ্য (Noun)";
+                else if (rawPos === "adjective") posTag = "বিশেষণ (Adjective)";
+                else if (typeof rawPos === "string") posTag = rawPos;
             }
         }
 
+        // ৩য় ধাপ: প্রাপ্ত ইংরেজি অর্থটিকে বাংলায় রূপান্তর করা
         let finalBangla = "";
         if (englishMeaning && englishMeaning.toLowerCase() !== normalizedWord.toLowerCase()) {
             const bnUrl = `${baseGoogle}?client=gtx&sl=en&tl=bn&dt=t&q=${encodeURIComponent(englishMeaning)}`;
@@ -162,6 +177,7 @@ async function searchArabicWord() {
             }
         }
 
+        // ফলাফল স্ক্রিনে দেখানো
         if (finalBangla) {
             let outputHTML = `বাংলা অর্থ: <span style="color:#d35400; font-size:22px;">${finalBangla}</span>`;
             if (englishMeaning) {
