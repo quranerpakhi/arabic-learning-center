@@ -220,5 +220,96 @@ iframe[style*="z-index: 2147483645"] {
 #clear-btn:hover {
     color: #e74c3c !important;
 }
+/* আকর্ষণীয় Contact সেকশন ডিজাইন */
+.contact-container {
+    padding: 50px 5%;
+    background: linear-gradient(180deg, #f8fcfb 0%, #ffffff 100%);
+    border-top: 1px solid #e6f2ef;
+}
+
+.contact-wrapper {
+    max-width: 1000px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.contact-header h2 {
+    font-size: 28px;
+    color: #1a252f;
+    margin-bottom: 10px;
+}
+
+.contact-header p {
+    color: #5d6d7e;
+    font-size: 16px;
+    margin-bottom: 35px;
+}
+
+.contact-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
+}
+
+.contact-card {
+    background: #ffffff;
+    padding: 30px 20px;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    border: 1px solid #eef2f3;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.contact-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 15px 35px rgba(0, 128, 128, 0.12);
+    border-color: #008080;
+}
+
+.c-icon {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 15px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+}
+
+.contact-card h3 {
+    font-size: 19px;
+    color: #2c3e50;
+    margin-bottom: 8px;
+}
+
+.contact-card p {
+    font-size: 14px;
+    color: #7f8c8d;
+    margin-bottom: 18px;
+}
+
+.c-link {
+    display: inline-block;
+    padding: 8px 18px;
+    background-color: #f4f8f7;
+    color: #008080;
+    font-weight: bold;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 15px;
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+.c-link:hover {
+    background-color: #008080;
+    color: #ffffff;
+}
+
+@media (max-width: 768px) {
+    .contact-grid {
+        grid-template-columns: 1fr;
+    }
+}
 
 
