@@ -143,7 +143,7 @@ async function searchArabicWord() {
     
     if (!rawWord) return;
 
-    // ১ম ধাপ: নিজস্ব তালিকায় শব্দটি থাকলে বাংলা, ইংরেজি ও পদ প্রকরণ সব দেখাবে
+    // ১ম ধাপ: নিজস্ব বিশেষ তালিকায় শব্দটি খুঁজবে
     if (customDictionary.hasOwnProperty(rawWord)) {
         const item = customDictionary[rawWord];
         resultDiv.innerHTML = `
@@ -154,17 +154,33 @@ async function searchArabicWord() {
         return;
     }
 
-    resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>সঠিক অর্থ খোঁজা হচ্ছে...</span>";
+    resultDiv.innerHTML = "<span style='color:#666; font-size:16px;'>কুরআনিক ও সাধারণ অভিধানে অর্থ খোঁজা হচ্ছে...</span>";
 
     try {
         const baseGoogle = ["https:/", "translate." + "googleapis.com", "translate_a", "single"].join("/");
-
-        // কুরআনিক বিশেষ সাকিন (ۡ) এবং অতিরিক্ত চিহ্নগুলোকে সাধারণ সাকিনে (ْ) রূপান্তর করা
-        let normalizedWord = rawWord
+        
+        // কুরআনিক চিহ্ন পরিষ্কার করে মূল অক্ষর ও সাধারণ সাকিনযুক্ত রূপ বের করা
+        const cleanRoot = rawWord.replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, "");
+        const normalizedWord = rawWord
             .replace(/\u06E1/g, "\u0652")
             .replace(/[\u06D6-\u06E0\u06E2-\u06ED]/g, "");
 
-        // ২য় ধাপ: গুগল থেকে ইংরেজি অর্থ এবং আসল পদ প্রকরণ (Verb নাকি Noun) বের করা
+        // ২য় ধাপ: অফিশিয়াল Quran.com ওয়ার্ড-বাই-ওয়ার্ড ডাটাবেসে কুরআনিক শব্দটি খোঁজা
+        const quranApiBase = ["https:/", "://quran.com", "api", "v4", "search"].join("/");
+        const quranSearchUrl = `${quranApiBase}?q=${encodeURIComponent(cleanRoot)}&size=1&language=bn`;
+        
+        const qRes = await fetch(quranSearchUrl);
+        const qData = await qRes.json();
+
+        let quranVerseContext = "";
+        if (qData && qData.search && Array.isArray(qData.search.results) && qData.search.results.length > 0) {
+            const firstMatch = qData.search.results.at(0);
+            if (firstMatch && firstMatch.verse_key) {
+                quranVerseContext = `কুরআনের রেফারেন্স: <strong>সূরা ও আয়াত (${firstMatch.verse_key})</strong>`;
+            }
+        }
+
+        // ৩য় ধাপ: ইংরেজি ও বাংলা নিখুঁত অর্থ বের করা
         const enUrl = `${baseGoogle}?client=gtx&sl=ar&tl=en&dt=t&dt=bd&q=${encodeURIComponent(normalizedWord)}`;
         const enRes = await fetch(enUrl);
         const enData = await enRes.json();
@@ -180,7 +196,6 @@ async function searchArabicWord() {
             });
         }
 
-        // পদ প্রকরণ নিখুঁতভাবে শনাক্ত করা (গুগলের আসল বিশ্লেষণ থেকে)
         if (Array.isArray(enData) && Array.isArray(enData.at(1))) {
             const firstCat = enData.at(1).at(0);
             if (Array.isArray(firstCat)) {
@@ -192,7 +207,6 @@ async function searchArabicWord() {
             }
         }
 
-        // ৩য় ধাপ: প্রাপ্ত ইংরেজি অর্থটিকে বাংলায় রূপান্তর করা
         let finalBangla = "";
         if (englishMeaning && englishMeaning.toLowerCase() !== normalizedWord.toLowerCase()) {
             const bnUrl = `${baseGoogle}?client=gtx&sl=en&tl=bn&dt=t&q=${encodeURIComponent(englishMeaning)}`;
@@ -208,7 +222,6 @@ async function searchArabicWord() {
             }
         }
 
-        // ফলাফল স্ক্রিনে দেখানো
         if (finalBangla) {
             let outputHTML = `বাংলা অর্থ: <span style="color:#d35400; font-size:22px;">${finalBangla}</span>`;
             if (englishMeaning) {
@@ -216,6 +229,9 @@ async function searchArabicWord() {
             }
             if (posTag) {
                 outputHTML += `<div style="font-size:14px; color:#555; margin-top:5px;">পদ প্রকরণ: <strong>${posTag}</strong></div>`;
+            }
+            if (quranVerseContext) {
+                outputHTML += `<div style="font-size:13px; color:#008080; margin-top:5px; background:#e8f8f5; padding:4px 10px; border-radius:4px; display:inline-block;">📖 ${quranVerseContext}</div>`;
             }
             resultDiv.innerHTML = outputHTML;
             return;
