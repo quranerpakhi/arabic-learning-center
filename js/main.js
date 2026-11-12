@@ -142,6 +142,7 @@ async function searchArabicWord() {
     const resultDiv = document.getElementById('dict-result');
     if (!rawWord) return;
 
+    // ১ম ধাপ: নিজস্ব তালিকায় শব্দটি খুঁজবে
     if (customDictionary.hasOwnProperty(rawWord)) {
         const item = customDictionary[rawWord];
         resultDiv.innerHTML = `
@@ -172,57 +173,56 @@ async function searchArabicWord() {
     let wordBn = "";
     let wordEn = "";
 
-    // কুরআনের ওয়ার্ড-বাই-ওয়ার্ড ডেটাবেস থেকে একক শব্দার্থ বের করা
+    // ২য় ধাপ: কুরআনের আয়াত খুঁজে সরাসরি ওয়ার্ড-বাই-ওয়ার্ড অর্থ বের করা
     try {
         const alQuranBase = ["https:/", "api.alquran.cloud", "v1"].join("/");
         const searchUrl = `${alQuranBase}/search/${encodeURIComponent(cleanRoot)}/all/quran-simple-clean`;
         const searchRes = await fetch(searchUrl);
         const searchData = await searchRes.json();
 
-        const matches = searchData?.data?.matches;
-        if (Array.isArray(matches) && matches.length > 0) {
-            const surahNum = matches[0].surah.number;
-            const ayahNum = matches[0].numberInSurah;
+        if (searchData && searchData.data && Array.isArray(searchData.data.matches) && searchData.data.matches.length > 0) {
+            const firstMatch = searchData.data.matches.at(0);
+            const surahNum = firstMatch.surah.number;
+            const ayahNum = firstMatch.numberInSurah;
 
-            const ayahRes = await fetch(`${alQuranBase}/ayah/${surahNum}:${ayahNum}/quran-simple-clean`);
-            const ayahData = await ayahRes.json();
+            // CORS প্রক্সি ব্যবহার করে সরাসরি ://quran.com থেকে ওয়ার্ড-বাই-ওয়ার্ড বাংলা ও ইংরেজি অর্থ আনা
+            const proxy = "https://corsproxy.io?";
+            const quranBase = ["https:/", "://quran.com", "api", "v4", "verses", "by_key"].join("/");
+            
+            const bnTarget = encodeURIComponent(`${quranBase}/${surahNum}:${ayahNum}?language=bn&words=true&word_fields=text_imlaei_simple`);
+            const enTarget = encodeURIComponent(`${quranBase}/${surahNum}:${ayahNum}?language=en&words=true&word_fields=text_imlaei_simple`);
 
-            if (ayahData?.data?.text) {
-                const ayahWords = ayahData.data.text.split(" ");
-                const wordIndex = ayahWords.findIndex(w => stripAll(w) === cleanRoot);
+            const [bnRes, enRes] = await Promise.all([
+                fetch(`${proxy}${bnTarget}`),
+                fetch(`${proxy}${enTarget}`)
+            ]);
 
-                if (wordIndex >= 0) {
-                    const cdnBase = ["https:/", "cdn.jsdelivr.net", "gh", "kazi-fahim", "quran-word-by-word-json@main", "data"].join("/");
-                    const surahRes = await fetch(`${cdnBase}/${surahNum}.json`).catch(() => null);
-                    if (surahRes && surahRes.ok) {
-                        const surahJson = await surahRes.json();
-                        const verseObj = surahJson[ayahNum] || surahJson[String(ayahNum)];
-                        if (Array.isArray(verseObj) && verseObj[wordIndex]) {
-                            const targetW = verseObj[wordIndex];
-                            wordEn = targetW.en || targetW.english || targetW.meaning || "";
-                            wordBn = targetW.bn || targetW.bengali || "";
+            if (bnRes.ok && enRes.ok) {
+                const bnData = await bnRes.json();
+                const enData = await enRes.json();
+
+                if (bnData && bnData.verse && Array.isArray(bnData.verse.words)) {
+                    for (let i = 0; i < bnData.verse.words.length; i++) {
+                        const w = bnData.verse.words.at(i);
+                        if (w.char_type_name !== "word") continue;
+
+                        if (stripAll(w.text_imlaei_simple || "") === cleanRoot) {
+                            wordBn = (w.translation && w.translation.text) ? w.translation.text : "";
+                            if (enData && enData.verse && Array.isArray(enData.verse.words)) {
+                                const wEn = enData.verse.words.at(i);
+                                wordEn = (wEn && wEn.translation && wEn.translation.text) ? wEn.translation.text : "";
+                            }
+                            break;
                         }
                     }
                 }
             }
         }
     } catch (qErr) {
-        console.log("Quran CDN lookup finished.");
+        console.log("Quran lookup skipped.");
     }
 
-    if (wordEn && !wordBn) {
-        try {
-            const baseGoogle = ["https:/", "translate." + "googleapis.com", "translate_a", "single"].join("/");
-            const bnUrl = `${baseGoogle}?client=gtx&sl=en&tl=bn&dt=t&q=${encodeURIComponent(wordEn)}`;
-            const bnRes = await fetch(bnUrl);
-            const bnData = await bnRes.json();
-
-            if (Array.isArray(bnData) && Array.isArray(bnData[0])) {
-                wordBn = bnData[0].map(item => item[0] || "").join("");
-            }
-        } catch (e) {}
-    }
-
+    // কুরআনের অফিশিয়াল শব্দার্থ পাওয়া গেলে সেটি দেখাবে
     if (wordBn && wordBn !== rawWord) {
         let outputHTML = `বাংলা অর্থ: <span style="color:#d35400; font-size:22px;">${wordBn}</span>`;
         if (wordEn) {
@@ -232,7 +232,7 @@ async function searchArabicWord() {
         return;
     }
 
-    // সাধারণ আরবী শব্দের অনুবাদ ও বহুবচন হ্যান্ডলিং
+    // ৩য় ধাপ: সাধারণ আরবী শব্দের অনুবাদ ও বহুবচন হ্যান্ডলিং (كُتُبٌ ও كَتَبَ ঠিক রাখার জন্য)
     try {
         const baseGoogle = ["https:/", "translate." + "googleapis.com", "translate_a", "single"].join("/");
         const isDefinitelyNoun = /[\u064B\u064C\u064D]/.test(normalizedWord) || normalizedWord.startsWith("ال");
@@ -246,15 +246,18 @@ async function searchArabicWord() {
 
         if (isDefinitelyNoun) {
             posTag = "বিশেষ্য (Noun)";
-        } else if (Array.isArray(checkData) && Array.isArray(checkData[1])) {
-            const rawPos = checkData[1][0]?.[0];
-            if (rawPos === "verb") {
-                isVerb = true;
-                posTag = "ক্রিয়া (Verb)";
-            } else if (rawPos === "noun") {
-                posTag = "বিশেষ্য (Noun)";
-            } else if (typeof rawPos === "string") {
-                posTag = rawPos;
+        } else if (Array.isArray(checkData) && Array.isArray(checkData.at(1))) {
+            const firstCat = checkData.at(1).at(0);
+            if (Array.isArray(firstCat)) {
+                const rawPos = firstCat.at(0);
+                if (rawPos === "verb") {
+                    isVerb = true;
+                    posTag = "ক্রিয়া (Verb)";
+                } else if (rawPos === "noun") {
+                    posTag = "বিশেষ্য (Noun)";
+                } else if (typeof rawPos === "string") {
+                    posTag = rawPos;
+                }
             }
         }
 
@@ -272,8 +275,12 @@ async function searchArabicWord() {
         const enData = await enRes.json();
 
         let englishMeaning = "";
-        if (Array.isArray(enData) && Array.isArray(enData[0])) {
-            englishMeaning = enData[0].map(item => item[0] || "").join("");
+        if (Array.isArray(enData) && Array.isArray(enData.at(0))) {
+            enData.at(0).forEach(item => {
+                if (Array.isArray(item) && typeof item.at(0) === "string") {
+                    englishMeaning += item.at(0);
+                }
+            });
         }
 
         if (isDefinitelyNoun && englishMeaning) {
@@ -292,8 +299,12 @@ async function searchArabicWord() {
             const bnRes = await fetch(bnUrl);
             const bnData = await bnRes.json();
 
-            if (Array.isArray(bnData) && Array.isArray(bnData[0])) {
-                finalBangla = bnData[0].map(item => item[0] || "").join("");
+            if (Array.isArray(bnData) && Array.isArray(bnData.at(0))) {
+                bnData.at(0).forEach(item => {
+                    if (Array.isArray(item) && typeof item.at(0) === "string") {
+                        finalBangla += item.at(0);
+                    }
+                });
             }
         }
 
