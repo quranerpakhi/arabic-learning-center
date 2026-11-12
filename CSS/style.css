@@ -143,6 +143,7 @@ iframe[style*="z-index: 2147483645"] {
 }
 .opt-btn.dict { border-left: 5px solid #ff9800; }
 .opt-btn.quran { border-left: 5px solid #008080; }
+.opt-btn.dua { border-left: 5px solid #8e44ad; }
 
 /* ডিকশনারি ডিজাইন */
 .dictionary-container {
