@@ -489,3 +489,45 @@ function copyDonateNumber(elementId, btnElement) {
         }, 2000);
     });
 }
+// Payment Method ট্যাব পরিবর্তন করার ফাংশন (bKash ও Bank Transfer)
+function switchPaymentTab(method) {
+    const bkashTab = document.getElementById('tab-bkash');
+    const bankTab = document.getElementById('tab-bank');
+    const bkashCheck = document.getElementById('check-bkash');
+    const bankCheck = document.getElementById('check-bank');
+    const bkashContent = document.getElementById('content-bkash');
+    const bankContent = document.getElementById('content-bank');
+
+    if (method === 'bkash') {
+        bkashTab.classList.add('active');
+        bankTab.classList.remove('active');
+        bkashCheck.style.display = 'flex';
+        bankCheck.style.display = 'none';
+        bkashContent.style.display = 'block';
+        bankContent.style.display = 'none';
+    } else {
+        bankTab.classList.add('active');
+        bkashTab.classList.remove('active');
+        bankCheck.style.display = 'flex';
+        bkashCheck.style.display = 'none';
+        bankContent.style.display = 'block';
+        bkashContent.style.display = 'none';
+    }
+}
+
+// নম্বর বা অ্যাকাউন্ট কপি করার ফাংশন
+function copyText(elementId, btnElement) {
+    const textToCopy = document.getElementById(elementId).innerText.trim();
+    navigator.clipboard.writeText(textToCopy).then(() => {
+        const originalText = btnElement.innerText;
+        btnElement.innerText = "✓ কপি হয়েছে";
+        btnElement.style.backgroundColor = "#27ae60";
+        btnElement.style.color = "#ffffff";
+
+        setTimeout(() => {
+            btnElement.innerText = originalText;
+            btnElement.style.backgroundColor = "";
+            btnElement.style.color = "";
+        }, 2000);
+    });
+}
