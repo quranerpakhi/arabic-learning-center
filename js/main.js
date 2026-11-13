@@ -396,21 +396,40 @@ async function loadQAFromSheet() {
         const response = await fetch(sheetCsvUrl);
         const csvText = await response.text();
         
-        // CSV ডেটা লাইন বাই লাইন পড়া
+        // CSV ফাইলের প্রতিটি কলাম নিখুঁতভাবে আলাদা করার ফাংশন (স্পেস বা কমায় বাক্য ভাঙবে না)
+        function parseCSVLine(text) {
+            const result = [];
+            let current = "";
+            let inQuotes = false;
+
+            for (let i = 0; i < text.length; i++) {
+                const char = text.charAt(i);
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = "";
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current.trim());
+            return result;
+        }
+
         const rows = csvText.split(/\r?\n/).slice(1);
         let htmlContent = "";
         let count = 0;
 
         rows.reverse().forEach(row => {
             if (!row.trim()) return;
-            // কমা দিয়ে কলাম আলাদা করা (কোটেশনের ভেতরের কমা ঠিক রেখে)
-            const cols = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || row.split(",");
             
-            const studentName = (cols[1] || "শিক্ষার্থী").replace(/^"|"$/g, "").trim();
-            const question = (cols[2] || "").replace(/^"|"$/g, "").trim();
-            const answer = (cols[3] || "").replace(/^"|"$/g, "").trim();
+            const cols = parseCSVLine(row);
+            const studentName = cols.at(1) || "শিক্ষার্থী";
+            const question = cols.at(2) || "";
+            const answer = cols.at(3) || "";
 
-            // শুধুমাত্র যেসব প্রশ্নের উত্তর আপনি লিখেছেন, সেগুলোই ওয়েবসাইটে দেখাবে
+            // শুধুমাত্র যেসব প্রশ্নের উত্তর লেখা হয়েছে, সেগুলোই পুরোপুরি দেখাবে
             if (question && answer) {
                 count++;
                 htmlContent += `
