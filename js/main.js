@@ -369,3 +369,66 @@ function copyEmail(event) {
         }, 2500);
     });
 }
+// প্রশ্ন ও উত্তর সেকশন খোলা এবং গুগল শিট থেকে উত্তরসহ প্রশ্ন লোড করা
+function toggleQA() {
+    const qaSection = document.getElementById('qa-section');
+    const duaSection = document.getElementById('dua-section');
+    const quranSection = document.getElementById('quran-section');
+    const dictSection = document.getElementById('dictionary-section');
+    
+    if (duaSection) duaSection.style.display = 'none';
+    if (quranSection) quranSection.style.display = 'none';
+    if (dictSection) dictSection.style.display = 'none';
+
+    if (qaSection.style.display === 'none' || qaSection.style.display === '') {
+        qaSection.style.display = 'block';
+        loadQAFromSheet();
+    } else {
+        qaSection.style.display = 'none';
+    }
+}
+
+async function loadQAFromSheet() {
+    const container = document.getElementById('qa-list-container');
+    const sheetCsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ39VRDr-0qn2eLHOBvr2iG1jLcsE--KIgXyWiQCptoB-6_n7uls1oYPrZkyVfbwVlrUzOb1u23tl2n/pub?gid=652661096&single=true&output=csv";
+
+    try {
+        const response = await fetch(sheetCsvUrl);
+        const csvText = await response.text();
+        
+        // CSV ডেটা লাইন বাই লাইন পড়া
+        const rows = csvText.split(/\r?\n/).slice(1);
+        let htmlContent = "";
+        let count = 0;
+
+        rows.reverse().forEach(row => {
+            if (!row.trim()) return;
+            // কমা দিয়ে কলাম আলাদা করা (কোটেশনের ভেতরের কমা ঠিক রেখে)
+            const cols = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || row.split(",");
+            
+            const studentName = (cols[1] || "শিক্ষার্থী").replace(/^"|"$/g, "").trim();
+            const question = (cols[2] || "").replace(/^"|"$/g, "").trim();
+            const answer = (cols[3] || "").replace(/^"|"$/g, "").trim();
+
+            // শুধুমাত্র যেসব প্রশ্নের উত্তর আপনি লিখেছেন, সেগুলোই ওয়েবসাইটে দেখাবে
+            if (question && answer) {
+                count++;
+                htmlContent += `
+                    <div class="qa-card">
+                        <div class="qa-question">প্রশ্ন: ${question}</div>
+                        <div class="qa-meta">প্রশ্নকারী: ${studentName}</div>
+                        <div class="qa-answer"><strong>উত্তর:</strong> ${answer}</div>
+                    </div>
+                `;
+            }
+        });
+
+        if (count > 0) {
+            container.innerHTML = htmlContent;
+        } else {
+            container.innerHTML = "<p style='text-align:center; color:#666;'>এখনো কোনো প্রশ্নোত্তর প্রকাশিত হয়নি। প্রথম প্রশ্নটি আপনি করুন!</p>";
+        }
+    } catch (error) {
+        container.innerHTML = "<p style='text-align:center; color:red;'>প্রশ্নোত্তর লোড করতে সমস্যা হচ্ছে।</p>";
+    }
+}
