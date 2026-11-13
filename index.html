@@ -195,10 +195,10 @@
     </footer>
 
     <script src="js/main.js?v=2"></script>
-   <!-- প্রফেশনাল Donate পপ-আপ বক্স (বিকাশ কিউআর কোড ও সিটি ব্যাংক তথ্যসহ) -->
-<div id="donate-modal" class="auth-modal-overlay" style="display: none;">
-    <div class="donate-pro-box" style="max-height: 90vh; overflow-y: auto;">
-        <span onclick="closeDonateModal()" class="auth-close-btn">&times;</span>
+   <!-- প্রফেশনাল Donate সেকশন (অটো স্ক্রল এবং সঠিক QR কোডসহ) -->
+<section id="donate-modal" class="contact-container" style="display: none; background: #f4f9f8; border-top: 2px solid #008080;">
+    <div class="donate-pro-box" style="margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.08);">
+        <span onclick="closeDonateModal()" class="auth-close-btn" title="বন্ধ করুন">&times;</span>
         
         <div class="donate-pro-grid">
             <!-- বামপাশের কলাম: Payment Methods -->
@@ -236,9 +236,9 @@
                         <button onclick="copyText('bkash-num-text', this)" class="pro-copy-btn">📋 কপি করুন</button>
                     </div>
 
-                    <!-- বিকাশ QR কোড -->
+                    <!-- বিকাশ QR কোড (.jpeg ফরম্যাটে ঠিক করা হয়েছে) -->
                     <div style="text-align: center; margin-top: 20px;">
-                        <img src="images/bkash-qr.png" alt="bKash QR Code" style="max-width: 240px; width: 100%; border-radius: 12px; border: 1px solid #eee; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+                        <img src="images/bkash-qr.jpeg" alt="bKash QR Code" style="max-width: 240px; width: 100%; border-radius: 12px; border: 1px solid #eee; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
                     </div>
                 </div>
 
@@ -263,7 +263,8 @@
             </div>
         </div>
     </div>
-</div>
+</section>
+
 
 </body>
 </html>
