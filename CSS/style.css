@@ -311,5 +311,40 @@ iframe[style*="z-index: 2147483645"] {
         grid-template-columns: 1fr;
     }
 }
+/* প্রশ্ন ও উত্তর বক্সের বর্ডার কালার */
+.opt-btn.qa { border-left: 5px solid #2980b9; }
+
+/* প্রশ্ন ও উত্তর কার্ড ডিজাইন */
+.qa-card {
+    background: #ffffff;
+    border: 1px solid #e1e8ed;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 18px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.03);
+}
+
+.qa-question {
+    font-size: 17px;
+    font-weight: bold;
+    color: #1a252f;
+    margin-bottom: 6px;
+}
+
+.qa-meta {
+    font-size: 13px;
+    color: #7f8c8d;
+    margin-bottom: 12px;
+}
+
+.qa-answer {
+    background: #f4f9fd;
+    border-left: 4px solid #2980b9;
+    padding: 12px 15px;
+    border-radius: 6px;
+    font-size: 15px;
+    color: #2c3e50;
+    line-height: 1.6;
+}
 
 
