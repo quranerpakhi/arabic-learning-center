@@ -544,41 +544,56 @@ header.site-header {
     color: #e74c3c;
 }
 
-/* সোশ্যাল লগইন বাটনগুলো */
-.social-login-btn {
-    width: 100%;
-    padding: 12px 20px;
-    border-radius: 50px;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    margin-bottom: 14px;
-    transition: all 0.2s ease;
-}
-
-.google-btn {
-    background-color: #ffffff;
-    color: #3c4043;
-    border: 1px solid #dadce0;
-}
-
-.google-btn:hover {
-    background-color: #f8f9fa;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.facebook-btn {
-    background-color: #1877f2;
+/* লোগোর ডানদিকের আকর্ষণীয় Donate বাটন */
+.donate-btn {
+    background: linear-gradient(135deg, #008080, #00a896);
     color: #ffffff;
     border: none;
+    padding: 10px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 128, 128, 0.25);
 }
 
-.facebook-btn:hover {
-    background-color: #166fe5;
-    box-shadow: 0 4px 12px rgba(24, 119, 242, 0.3);
+.donate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 128, 128, 0.35);
+    background: linear-gradient(135deg, #006666, #008080);
 }
 
+/* ডোনেশন নম্বর বক্স ডিজাইন */
+.donate-methods {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    text-align: left;
+}
+
+.donate-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8fcfb;
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 1px solid #e6f2ef;
+}
+
+.copy-num-btn {
+    background-color: #008080;
+    color: #ffffff;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.copy-num-btn:hover {
+    background-color: #005f5f;
+}
