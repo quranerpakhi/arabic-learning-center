@@ -451,3 +451,18 @@ async function loadQAFromSheet() {
         container.innerHTML = "<p style='text-align:center; color:red;'>প্রশ্নোত্তর লোড করতে সমস্যা হচ্ছে।</p>";
     }
 }
+// About Us সেকশন খোলা এবং বন্ধ করার ফাংশন
+function toggleAbout() {
+    const aboutSection = document.getElementById('about-section');
+    const contactSection = document.getElementById('contact-section');
+    
+    // Contact খোলা থাকলে তা বন্ধ করে দেবে যাতে পেজ পরিষ্কার থাকে
+    if (contactSection) contactSection.style.display = 'none';
+
+    if (aboutSection.style.display === 'none' || aboutSection.style.display === '') {
+        aboutSection.style.display = 'block';
+        aboutSection.scrollIntoView({ behavior: 'smooth' });
+    } else {
+        aboutSection.style.display = 'none';
+    }
+}
