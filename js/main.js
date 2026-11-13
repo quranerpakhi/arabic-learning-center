@@ -466,10 +466,26 @@ function toggleAbout() {
         aboutSection.style.display = 'none';
     }
 }
-function openAuthModal() {
-    document.getElementById('auth-modal').style.display = 'flex';
+// Donate পপ-আপ খোলা এবং বন্ধ করার ফাংশন
+function openDonateModal() {
+    document.getElementById('donate-modal').style.display = 'flex';
 }
 
-function closeAuthModal() {
-    document.getElementById('auth-modal').style.display = 'none';
+function closeDonateModal() {
+    document.getElementById('donate-modal').style.display = 'none';
+}
+
+// ডোনেশন নম্বর এক ক্লিকে কপি করার ফাংশন
+function copyDonateNumber(elementId, btnElement) {
+    const numberText = document.getElementById(elementId).innerText.replace(/-/g, "");
+    navigator.clipboard.writeText(numberText).then(() => {
+        const originalText = btnElement.innerText;
+        btnElement.innerText = "✓ কপি হয়েছে";
+        btnElement.style.backgroundColor = "#27ae60";
+
+        setTimeout(() => {
+            btnElement.innerText = originalText;
+            btnElement.style.backgroundColor = "";
+        }, 2000);
+    });
 }
