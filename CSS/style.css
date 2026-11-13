@@ -417,27 +417,35 @@ iframe[style*="z-index: 2147483645"] {
     font-weight: 600;
 }
 /* হেডার এবং মাঝামাঝি নেভিগেশন বার ডিজাইন */
-.site-header {
+header.site-header {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
     background-color: #ffffff;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    padding: 0 !important;
 }
 
 .top-bar {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    width: 100%;
     padding: 12px 5%;
+    box-sizing: border-box;
 }
 
 .center-nav {
     display: flex;
     justify-content: center;
     align-items: center;
+    width: 100%;
     gap: 35px;
     padding: 12px 5%;
     background-color: #f8fcfb;
     border-top: 1px solid #e6f2ef;
     border-bottom: 1px solid #e6f2ef;
+    box-sizing: border-box;
 }
 
 .center-nav a {
@@ -454,5 +462,3 @@ iframe[style*="z-index: 2147483645"] {
     background-color: #008080;
     color: #ffffff;
 }
-
-
