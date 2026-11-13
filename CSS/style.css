@@ -346,5 +346,75 @@ iframe[style*="z-index: 2147483645"] {
     color: #2c3e50;
     line-height: 1.6;
 }
+/* About Us সেকশন ডিজাইন */
+.about-container {
+    padding: 50px 5%;
+    background-color: #f4f9f8;
+    border-top: 1px solid #e0efec;
+    border-bottom: 1px solid #e0efec;
+}
+
+.about-wrapper {
+    max-width: 850px;
+    margin: 0 auto;
+}
+
+.about-card {
+    background: #ffffff;
+    padding: 35px 30px;
+    border-radius: 16px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.04);
+    border: 1px solid #e6f0ee;
+    text-align: center;
+}
+
+.about-badge {
+    display: inline-block;
+    background: #e8f8f5;
+    color: #008080;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 12px;
+}
+
+.about-card h2 {
+    font-size: 28px;
+    color: #1a252f;
+    margin-bottom: 10px;
+}
+
+.about-lead {
+    font-size: 17px;
+    color: #008080;
+    font-weight: 600;
+    margin-bottom: 18px;
+}
+
+.about-details p {
+    font-size: 16px;
+    color: #4a5568;
+    line-height: 1.8;
+    margin-bottom: 25px;
+    text-align: justify;
+}
+
+.about-features {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.f-item {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #2d3748;
+    font-weight: 600;
+}
 
 
