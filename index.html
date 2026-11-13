@@ -33,6 +33,8 @@
             <a href="#dictionary-section" onclick="toggleDictionary()" class="opt-btn dict">আরবী-বাংলা অভিধান (Dictionary)</a>
             <a href="#quran-section" onclick="toggleQuran()" class="opt-btn quran">শব্দে শব্দে কুরআন (QuranWBW)</a>
             <a href="#dua-section" onclick="toggleDua()" class="opt-btn dua">দোআ ও যিকির (Hisnul Muslim)</a>
+            <a href="#qa-section" onclick="toggleQA()" class="opt-btn qa">প্রশ্ন ও উত্তর (Q&A)</a>
+
         </div>
     </section>
         <!-- আরবী টু বাংলা ডিকশনারি সেকশন -->
@@ -66,6 +68,23 @@
                 <a href="https://dua.gtaf.org/" target="_blank" style="background: #8e44ad; color: white; padding: 8px 15px; border-radius: 6px; text-decoration: none; font-size: 14px;">বড় স্ক্রিনে খুলুন ↗</a>
             </div>
             <iframe src="https://dua.gtaf.org/" style="width: 100%; height: 600px; border: 1px solid #ddd; border-radius: 10px;" title="Hisnul Muslim Dua"></iframe>
+        </div>
+    </section>
+    <!-- প্রশ্ন ও উত্তর (Q&A) সেকশন -->
+    <section id="qa-section" class="dictionary-container" style="display: none;">
+        <div class="dict-box" style="max-width: 900px; padding: 25px; text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px;">
+                <div>
+                    <h2 style="margin: 0; color: #2c3e50;">❓ শিক্ষার্থীদের প্রশ্ন ও উত্তর</h2>
+                    <p style="margin: 5px 0 0; color: #666; font-size: 14px;">আপনার যেকোনো প্রশ্ন জমা দিন, উত্তর দেওয়ার পর এখানে প্রকাশিত হবে</p>
+                </div>
+                <a href="https://docs.google.com/forms/d/e/1FAIpQLSdc-cLFoJ8VsC13X2rkEnh_eRz3I7d1VXQKPtwCI3JZxkPS7A/viewform?usp=header" target="_blank" style="background: #2980b9; color: white; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 15px;">+ নতুন প্রশ্ন করুন</a>
+            </div>
+
+            <!-- এখানে উত্তরসহ প্রশ্নগুলো কার্ড আকারে লোড হবে -->
+            <div id="qa-list-container">
+                <p style="text-align: center; color: #666;">প্রশ্ন ও উত্তর লোড হচ্ছে...</p>
+            </div>
         </div>
     </section>
 
