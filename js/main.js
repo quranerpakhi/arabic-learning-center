@@ -352,3 +352,20 @@ function toggleContact() {
         contactSection.style.display = 'none';
     }
 }
+// ইমেইলে ক্লিক করলে ঠিকানা কপি করার ফাংশন
+function copyEmail(event) {
+    const email = "quranerpakhi@protonmail.com";
+    navigator.clipboard.writeText(email).then(() => {
+        const btn = document.getElementById('email-copy-btn');
+        const originalText = btn.innerText;
+        btn.innerText = "✓ ইমেইল কপি হয়েছে!";
+        btn.style.backgroundColor = "#27ae60";
+        btn.style.color = "#ffffff";
+
+        setTimeout(() => {
+            btn.innerText = originalText;
+            btn.style.backgroundColor = "";
+            btn.style.color = "";
+        }, 2500);
+    });
+}
