@@ -462,3 +462,123 @@ header.site-header {
     background-color: #008080;
     color: #ffffff;
 }
+/* ক্যাপসুল শেইপ Login / Register বাটন */
+.auth-pill-btn {
+    background-color: #008080;
+    color: #ffffff;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 50px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 128, 128, 0.2);
+    transition: all 0.3s ease;
+}
+
+.auth-pill-btn:hover {
+    background-color: #006666;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 128, 128, 0.3);
+}
+
+.logout-pill-btn {
+    background-color: #e74c3c;
+    color: #ffffff;
+    border: none;
+    padding: 7px 16px;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.logout-pill-btn:hover {
+    background-color: #c0392b;
+}
+
+/* পপ-আপ বক্স (Modal) ডিজাইন */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    backdrop-filter: blur(3px);
+}
+
+.modal-card {
+    background: #ffffff;
+    width: 90%;
+    max-width: 380px;
+    padding: 35px 25px;
+    border-radius: 20px;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+    animation: popIn 0.25s ease-out;
+}
+
+@keyframes popIn {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.close-modal {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 24px;
+    color: #888;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.close-modal:hover {
+    color: #e74c3c;
+}
+
+/* সোশ্যাল লগইন বাটনগুলো */
+.social-login-btn {
+    width: 100%;
+    padding: 12px 20px;
+    border-radius: 50px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    transition: all 0.2s ease;
+}
+
+.google-btn {
+    background-color: #ffffff;
+    color: #3c4043;
+    border: 1px solid #dadce0;
+}
+
+.google-btn:hover {
+    background-color: #f8f9fa;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.facebook-btn {
+    background-color: #1877f2;
+    color: #ffffff;
+    border: none;
+}
+
+.facebook-btn:hover {
+    background-color: #166fe5;
+    box-shadow: 0 4px 12px rgba(24, 119, 242, 0.3);
+}
+
