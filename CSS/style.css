@@ -597,3 +597,116 @@ header.site-header {
 .copy-num-btn:hover {
     background-color: #005f5f;
 }
+/* প্রফেশনাল ডোনেশন বক্স (বামপাশে অপশন, ডানপাশে বিস্তারিত) */
+.donate-pro-box {
+    background: #f8f9fa;
+    padding: 30px;
+    border-radius: 16px;
+    width: 92%;
+    max-width: 780px;
+    position: relative;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+    text-align: left;
+}
+
+.donate-pro-grid {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 25px;
+    align-items: start;
+}
+
+.payment-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.pay-method-btn {
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+    padding: 14px 16px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #2c3e50;
+}
+
+.pay-method-btn:hover {
+    border-color: #27ae60;
+}
+
+.pay-method-btn.active {
+    border-color: #27ae60;
+    background-color: #f4fbf7;
+    box-shadow: 0 4px 10px rgba(39, 174, 96, 0.1);
+}
+
+.check-badge {
+    background-color: #27ae60;
+    color: #ffffff;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.payment-details-card {
+    background: #ffffff;
+    padding: 25px;
+    border-radius: 12px;
+    border: 1px solid #eaeaea;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    min-height: 210px;
+}
+
+.info-copy-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 18px;
+    background: #fdf2f7;
+    padding: 12px 15px;
+    border-radius: 8px;
+    border: 1px dashed #e2136e;
+}
+
+.pro-copy-btn {
+    background: #ffffff;
+    border: 1px solid #ccc;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #333;
+    transition: all 0.2s ease;
+}
+
+.pro-copy-btn:hover {
+    background: #27ae60;
+    color: #ffffff;
+    border-color: #27ae60;
+}
+
+.bank-info-list p {
+    margin: 8px 0;
+    font-size: 15px;
+    color: #2c3e50;
+    border-bottom: 1px solid #f4f4f4;
+    padding-bottom: 6px;
+}
+
+@media (max-width: 700px) {
+    .donate-pro-grid {
+        grid-template-columns: 1fr;
+    }
+}
