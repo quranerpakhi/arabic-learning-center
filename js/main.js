@@ -466,3 +466,10 @@ function toggleAbout() {
         aboutSection.style.display = 'none';
     }
 }
+function openAuthModal() {
+    document.getElementById('auth-modal').style.display = 'flex';
+}
+
+function closeAuthModal() {
+    document.getElementById('auth-modal').style.display = 'none';
+}
