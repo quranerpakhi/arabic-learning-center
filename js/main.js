@@ -467,8 +467,13 @@ function toggleAbout() {
     }
 }
 // Donate পপ-আপ খোলা এবং বন্ধ করার ফাংশন
+// Donate সেকশন খোলা এবং অটো স্ক্রল করে নিচে নামার ফাংশন
 function openDonateModal() {
-    document.getElementById('donate-modal').style.display = 'flex';
+    const modal = document.getElementById('donate-modal');
+    if (modal) {
+        modal.style.display = 'block';
+        modal.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 }
 
 function closeDonateModal() {
