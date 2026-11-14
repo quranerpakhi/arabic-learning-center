@@ -1,4 +1,4 @@
-// ১. ওয়েবসাইট লোড হওয়ার সাথে সাথে JSON থেকে ক্লাস নোট ও লিংক লোড করার কোড
+// ১. ওয়েবসাইট লোড হওয়ার সাথে সাথে ডেটা আনবে, কিন্তু নোটগুলো শুরুতে লুকানো থাকবে
 document.addEventListener("DOMContentLoaded", function() {
     fetch('data/data.json')
         .then(response => response.json())
@@ -10,17 +10,29 @@ document.addEventListener("DOMContentLoaded", function() {
             if (document.getElementById('meet-btn')) {
                 document.getElementById('meet-btn').href = data.live_classes.google_meet_link;
             }
-            filterNotes('regular');
+            // এখান থেকে অটো filterNotes('regular') মুছে দেওয়া হয়েছে যাতে শুরুতে না দেখায়
         })
         .catch(err => console.log("JSON load error:", err));
 });
 
-// ২. রেগুলার বা এক্সট্রা নোট ফিল্টার করার ফাংশন
+// ২. রেগুলার বা এক্সট্রা নোট বাটনে ক্লিক করলে নোট দেখানোর ও বন্ধ করার ফাংশন
+let currentNoteType = "";
+
 function filterNotes(type) {
+    const notesSection = document.getElementById('notes');
     const container = document.getElementById('notes-container');
     const title = document.getElementById('section-title');
-    if (!container || !window.allData) return;
-    
+    if (!notesSection || !container || !window.allData) return;
+
+    // একই বাটনে আবার ক্লিক করলে সেকশনটি বন্ধ হয়ে যাবে
+    if (notesSection.style.display === 'block' && currentNoteType === type) {
+        notesSection.style.display = 'none';
+        currentNoteType = "";
+        return;
+    }
+
+    currentNoteType = type;
+    notesSection.style.display = 'block';
     container.innerHTML = "";
     
     let notes = [];
@@ -41,7 +53,11 @@ function filterNotes(type) {
         `;
         container.appendChild(card);
     });
+
+    // নোট খোলার পর স্মুথলি নিচে স্ক্রল করে দেখাবে
+    notesSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
+
 
 // ৩. ডিকশনারি বক্স খোলা এবং বন্ধ করার ফাংশন
 function toggleDictionary() {
