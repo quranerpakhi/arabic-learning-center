@@ -32,6 +32,7 @@ function filterNotes(type) {
     }
 
     currentNoteType = type;
+    closeAllSections('notes');
     notesSection.style.display = 'block';
     container.innerHTML = "";
     
@@ -61,6 +62,7 @@ function filterNotes(type) {
 
 // ৩. ডিকশনারি বক্স খোলা এবং বন্ধ করার ফাংশন
 function toggleDictionary() {
+    closeAllSections('dictionary-section');
     const dictSection = document.getElementById('dictionary-section');
     if (dictSection.style.display === 'none' || dictSection.style.display === '') {
         dictSection.style.display = 'block';
@@ -72,6 +74,7 @@ function toggleDictionary() {
 
 // কুরআন বক্স খোলা এবং বন্ধ করার ফাংশন
 function toggleQuran() {
+    closeAllSections('quran-section');
     const quranSection = document.getElementById('quran-section');
     const dictSection = document.getElementById('dictionary-section');
     
@@ -86,6 +89,7 @@ function toggleQuran() {
 }
 // দোআ ও যিকির বক্স খোলা এবং বন্ধ করার ফাংশন
 function toggleDua() {
+    closeAllSections('dua-section');
     const duaSection = document.getElementById('dua-section');
     const quranSection = document.getElementById('quran-section');
     const dictSection = document.getElementById('dictionary-section');
@@ -360,6 +364,7 @@ async function searchArabicWord() {
 
 // Contact সেকশন খোলা এবং বন্ধ করার ফাংশন
 function toggleContact() {
+    closeAllSections('contact-section');
     const contactSection = document.getElementById('contact-section');
     if (contactSection.style.display === 'none' || contactSection.style.display === '') {
         contactSection.style.display = 'block';
@@ -387,6 +392,7 @@ function copyEmail(event) {
 }
 // প্রশ্ন ও উত্তর সেকশন খোলা এবং গুগল শিট থেকে উত্তরসহ প্রশ্ন লোড করা
 function toggleQA() {
+    closeAllSections('qa-section');
     const qaSection = document.getElementById('qa-section');
     const duaSection = document.getElementById('dua-section');
     const quranSection = document.getElementById('quran-section');
@@ -469,6 +475,7 @@ async function loadQAFromSheet() {
 }
 // About Us সেকশন খোলা এবং বন্ধ করার ফাংশন
 function toggleAbout() {
+    closeAllSections('about-section');
     const aboutSection = document.getElementById('about-section');
     const contactSection = document.getElementById('contact-section');
     
@@ -484,17 +491,46 @@ function toggleAbout() {
 }
 // Donate পপ-আপ খোলা এবং বন্ধ করার ফাংশন
 // Donate সেকশন খোলা এবং অটো স্ক্রল করে নিচে নামার ফাংশন
+// খোলা থাকা সব সেকশন একসাথে বন্ধ করার সহায়ক ফাংশন
+function closeAllSections(exceptId) {
+    const allSectionIds = [
+        'donate-modal',
+        'notes',
+        'dictionary-section',
+        'quran-section',
+        'dua-section',
+        'qa-section',
+        'about-section',
+        'contact-section'
+    ];
+
+    allSectionIds.forEach(id => {
+        if (id !== exceptId) {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        }
+    });
+}
+
+// Donate বাটনে ক্লিক করলে খুলবে, আবার ক্লিক করলে বন্ধ হবে
 function openDonateModal() {
     const modal = document.getElementById('donate-modal');
-    if (modal) {
+    if (!modal) return;
+
+    if (modal.style.display === 'block') {
+        modal.style.display = 'none';
+    } else {
+        closeAllSections('donate-modal');
         modal.style.display = 'block';
         modal.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 }
 
 function closeDonateModal() {
-    document.getElementById('donate-modal').style.display = 'none';
+    const modal = document.getElementById('donate-modal');
+    if (modal) modal.style.display = 'none';
 }
+
 
 // ডোনেশন নম্বর এক ক্লিকে কপি করার ফাংশন
 function copyDonateNumber(elementId, btnElement) {
